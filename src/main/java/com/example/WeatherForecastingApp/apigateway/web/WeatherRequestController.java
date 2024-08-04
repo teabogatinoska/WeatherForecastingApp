@@ -13,18 +13,19 @@ import org.springframework.kafka.core.KafkaTemplate;
 public class WeatherRequestController {
 
     @Autowired
-    private KafkaTemplate<String, String> kafkaTemplate;
+    private KafkaTemplate<String, UserWeatherRequestDto> kafkaTemplate;
 
     private static final String REQUEST_TOPIC = "user-weather-request";
 
     @PostMapping("/request")
     public String requestWeatherData(@RequestBody UserWeatherRequestDto requestDto) {
-        String event = createEvent(requestDto);
-        kafkaTemplate.send(REQUEST_TOPIC, event);
+        kafkaTemplate.send(REQUEST_TOPIC, requestDto);
         return "Weather request for " + requestDto.getLocation() + " by user " + requestDto.getUsername() + " has been received";
     }
 
-    private String createEvent(UserWeatherRequestDto requestDto) {
+    /*private String createEvent(UserWeatherRequestDto requestDto) {
         return "{\"username\": \"" + requestDto.getUsername() + "\", \"location\": \"" + requestDto.getLocation() + "\"}";
     }
+
+     */
 }

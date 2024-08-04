@@ -5,7 +5,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 
-@SpringBootApplication(exclude = {DataSourceAutoConfiguration.class })
+@SpringBootApplication(scanBasePackages = { "com.example.WeatherForecastingApp.weatherfetcher",
+        "com.example.WeatherForecastingApp.common"}, exclude = {DataSourceAutoConfiguration.class })
 @EnableDiscoveryClient
 public class WeatherFetcherApplication {
     public static void main(String[] args) {

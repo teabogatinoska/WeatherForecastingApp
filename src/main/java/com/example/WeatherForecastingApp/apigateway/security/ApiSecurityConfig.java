@@ -1,4 +1,4 @@
-package com.example.WeatherForecastingApp.registration;
+package com.example.WeatherForecastingApp.apigateway.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -8,17 +8,18 @@ import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 @EnableWebSecurity
-public class SecurityConfig {
+public class ApiSecurityConfig {
 
-    @Bean(name = "eurekaSecurityConfig")
+    @Bean(name = "apiSecurityConfigBean")
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf().disable()
                 .authorizeHttpRequests((requests) -> requests
-                        .requestMatchers("/eureka/**").permitAll()
+                        .requestMatchers("/api/weather/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .httpBasic();
         return http.build();
     }
 }
+

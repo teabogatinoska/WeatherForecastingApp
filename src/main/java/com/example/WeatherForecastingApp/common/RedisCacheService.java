@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.data.redis.core.RedisTemplate;
 
+import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -14,11 +15,11 @@ public class RedisCacheService {
 
     private static final long CACHE_TTL = 1;
 
-    public void cacheData(String key, String data) {
+    public void cacheData(String key,  ArrayList<String> data) {
         redisTemplate.opsForValue().set(key, data, CACHE_TTL, TimeUnit.HOURS);
     }
 
-    public String getCachedData(String key) {
-        return (String) redisTemplate.opsForValue().get(key);
+    public ArrayList<String> getCachedData(String key) {
+        return (ArrayList<String>) redisTemplate.opsForValue().get(key);
     }
 }
