@@ -8,7 +8,7 @@ import org.springframework.web.client.RestTemplate;
 
 @Component
 public class VisualCrossingCommand implements WeatherApiCommand{
-    private static final String WEATHER_API_URL = "https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/%s/next7days?unitGroup=metric&include=hours%%2Cdays&key=WY2C5X7BA532TDR3PN8GXNPTW&contentType=json";
+    private static final String WEATHER_API_URL = "https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/%s/next7days?unitGroup=metric&include=hours&key=WY2C5X7BA532TDR3PN8GXNPTW&contentType=json";
     private static final String TOPIC = "weather-api4-data";
 
     private final RestTemplate restTemplate = new RestTemplate();
