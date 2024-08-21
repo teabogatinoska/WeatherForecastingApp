@@ -34,7 +34,11 @@ public class TomorrowIoParser implements WeatherDataParser{
 
             if (!timestamp.isBefore(now)) {
                 double temperature = hourlyNode.path("values").path("temperature").asDouble();
-                hourlyForecasts.add(new HourlyForecast(timestamp, temperature));
+                double humidityValue = hourlyNode.path("values").path("humidity").asDouble();
+                double precipitationProbabilityValue = hourlyNode.path("values").path("precipitationProbability").asDouble();
+                double windSpeedValue = hourlyNode.path("values").path("windSpeed").asDouble();
+                double windSpeedInKmh = windSpeedValue * 3.6;
+                hourlyForecasts.add(new HourlyForecast(timestamp, temperature, humidityValue, precipitationProbabilityValue, windSpeedInKmh));
             }
         }
 

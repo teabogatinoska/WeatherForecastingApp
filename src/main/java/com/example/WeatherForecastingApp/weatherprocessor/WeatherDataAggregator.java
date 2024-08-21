@@ -5,6 +5,7 @@ import com.example.WeatherForecastingApp.weatherprocessor.model.CombinedHourlyFo
 import com.example.WeatherForecastingApp.weatherprocessor.model.HourlyForecast;
 import com.example.WeatherForecastingApp.weatherprocessor.model.WeatherData;
 import com.example.WeatherForecastingApp.weatherprocessor.parser.*;
+import com.example.WeatherForecastingApp.weatherprocessor.processor.WeatherProcessorManager;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -14,20 +15,27 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 
+@Getter
 @Service
 public class WeatherDataAggregator {
 
     private final Map<String, WeatherDataParser> parsers;
-    private final Map<LocalDateTime, List<HourlyForecast>> combinedHourlyForecasts;
-    @Getter
+
+    private final Map<LocalDateTime, CombinedHourlyForecast> combinedHourlyForecasts;
+
     private final Map<LocalDate, CombinedDailyForecast> combinedDailyForecasts;
 
+    private final WeatherProcessorManager weatherProcessorManager;
+    private final Set<String> processedApis;
+
     @Autowired
-    public WeatherDataAggregator(List<WeatherDataParser> parserList) {
+    public WeatherDataAggregator(List<WeatherDataParser> parserList, WeatherProcessorManager weatherProcessorManager) {
         System.out.println("INSIDE CONSTRUCTOR");
         this.parsers = new HashMap<>();
         this.combinedHourlyForecasts = new TreeMap<>();
         this.combinedDailyForecasts = new TreeMap<>();
+        this.weatherProcessorManager = weatherProcessorManager;
+        this.processedApis = new HashSet<>();
 
         for (WeatherDataParser parser : parserList) {
             if (parser instanceof OpenMeteoParser) {
@@ -77,6 +85,13 @@ public class WeatherDataAggregator {
             if (parser != null) {
                 WeatherData weatherData = parser.parse(jsonData);
                 combineWeatherData(weatherData);
+                processedApis.add(topic);
+
+                if (allApisProcessed()) {
+                    weatherProcessorManager.processAllData(combinedHourlyForecasts, combinedDailyForecasts);
+                    processedApis.clear();
+                }
+
                 System.out.println("Weather Data: " + weatherData.toString());
                 System.out.println("HOURLY: " + getCombinedHourlyForecasts().toString());
                 System.out.println("DAILY: " + getCombinedDailyForecasts().toString());
@@ -93,7 +108,13 @@ public class WeatherDataAggregator {
         for (HourlyForecast forecast : weatherData.getHourlyForecasts()) {
             LocalDateTime timestamp = forecast.getTimestamp();
 
-            combinedHourlyForecasts.computeIfAbsent(timestamp, k -> new ArrayList<>()).add(forecast);
+            CombinedHourlyForecast combinedHourlyForecast = combinedHourlyForecasts
+                    .computeIfAbsent(timestamp, k -> new CombinedHourlyForecast(timestamp));
+
+            combinedHourlyForecast.addTemperature(forecast.getTemperature());
+            combinedHourlyForecast.addHumidity(forecast.getHumidity());
+            combinedHourlyForecast.addPrecipitationProbability(forecast.getPrecipitationProbability());
+            combinedHourlyForecast.addWindSpeed(forecast.getWindSpeed());
 
             LocalDate date = timestamp.toLocalDate();
             combinedDailyForecasts.computeIfAbsent(date, k -> new CombinedDailyForecast())
@@ -101,27 +122,9 @@ public class WeatherDataAggregator {
         }
     }
 
-    public Map<LocalDateTime, CombinedHourlyForecast> getCombinedHourlyForecasts() {
-        Map<LocalDateTime, CombinedHourlyForecast> result = new TreeMap<>();
-
-        for (Map.Entry<LocalDateTime, List<HourlyForecast>> entry : combinedHourlyForecasts.entrySet()) {
-            LocalDateTime timestamp = entry.getKey();
-            List<HourlyForecast> hourlyForecasts = entry.getValue();
-
-            CombinedHourlyForecast combinedHourlyForecast = result.computeIfAbsent(
-                    timestamp, k -> new CombinedHourlyForecast(timestamp)
-            );
-
-            for (HourlyForecast forecast : hourlyForecasts) {
-                combinedHourlyForecast.addTemperature(forecast.getTemperature());
-            }
-
-        }
-
-        return result;
-    }
 
     public Map<LocalDate, CombinedDailyForecast> getCombinedDailyForecasts() {
+
         Map<LocalDate, CombinedDailyForecast> result = new TreeMap<>();
 
         for (Map.Entry<LocalDate, CombinedDailyForecast> entry : combinedDailyForecasts.entrySet()) {
@@ -134,5 +137,13 @@ public class WeatherDataAggregator {
         return result;
     }
 
+    private boolean allApisProcessed() {
+        return parsers.keySet().equals(processedApis);
+    }
 
 }
+
+
+
+
+

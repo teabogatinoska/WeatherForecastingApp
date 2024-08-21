@@ -36,7 +36,10 @@ public class VisualCrossingParser implements WeatherDataParser {
                 LocalDateTime timestamp = LocalDateTime.parse(date + "T" + time, dateTimeFormatter).truncatedTo(ChronoUnit.HOURS);
                 if (!timestamp.isBefore(now)) {
                     double temperature = hourNode.path("temp").asDouble();
-                    hourlyForecasts.add(new HourlyForecast(timestamp, temperature));
+                    double humidity = hourNode.path("humidity").asDouble();
+                    double precipitationProbability =hourNode.path("precipprob").asDouble();
+                    double windSpeed = hourNode.path("windspeed").asDouble();
+                    hourlyForecasts.add(new HourlyForecast(timestamp, temperature, humidity, precipitationProbability, windSpeed));
                 }
             }
         }

@@ -8,7 +8,12 @@ public class CombinedDailyForecast {
     private final List<CombinedHourlyForecast> hourlyForecasts = new ArrayList<>();
 
     public void addForecast(HourlyForecast forecast) {
-        hourlyForecasts.add(new CombinedHourlyForecast(forecast.getTimestamp(), forecast.getTemperature()));
+        CombinedHourlyForecast hourlyForecast = new CombinedHourlyForecast(forecast.getTimestamp());
+        hourlyForecast.addTemperature(forecast.getTemperature());
+        hourlyForecast.addHumidity(forecast.getHumidity());
+        hourlyForecast.addPrecipitationProbability(forecast.getPrecipitationProbability());
+        hourlyForecast.addWindSpeed(forecast.getWindSpeed());
+        hourlyForecasts.add(hourlyForecast);
     }
     public List<CombinedHourlyForecast> getHourlyForecasts() {
         hourlyForecasts.sort(Comparator.comparing(CombinedHourlyForecast::getTimestamp));

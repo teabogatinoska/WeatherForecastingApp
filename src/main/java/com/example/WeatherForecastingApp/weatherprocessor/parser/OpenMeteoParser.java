@@ -23,6 +23,9 @@ public class OpenMeteoParser implements WeatherDataParser{
         JsonNode rootNode = objectMapper.readTree(jsonData);
         JsonNode times = rootNode.path("hourly").path("time");
         JsonNode temperatures = rootNode.path("hourly").path("temperature_2m");
+        JsonNode humidity = rootNode.path("hourly").path("relative_humidity_2m");
+        JsonNode precipitationProbability = rootNode.path("hourly").path("precipitation_probability");
+        JsonNode windSpeed = rootNode.path("hourly").path("wind_speed_10m");
 
         List<HourlyForecast> hourlyForecasts = new ArrayList<>();
 
@@ -36,7 +39,12 @@ public class OpenMeteoParser implements WeatherDataParser{
             LocalDateTime timestamp = LocalDateTime.parse(times.get(i).asText(), formatter).truncatedTo(ChronoUnit.HOURS);
             if (!timestamp.isBefore(now)) {
                 double temperature = temperatures.get(i).asDouble();
-                hourlyForecasts.add(new HourlyForecast(timestamp, temperature));
+                double humidityValue = humidity.get(i).asDouble();
+                double precipitationProbabilityValue = precipitationProbability.get(i).asDouble();
+                double windSpeedValue = windSpeed.get(i).asDouble();
+
+                hourlyForecasts.add(new HourlyForecast(timestamp, temperature, humidityValue, precipitationProbabilityValue, windSpeedValue));
+
             }
         }
 

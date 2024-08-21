@@ -34,7 +34,10 @@ public class WeatherApiParser implements WeatherDataParser{
                 LocalDateTime timestamp = LocalDateTime.parse(hourNode.path("time").asText(), formatter).truncatedTo(ChronoUnit.HOURS);
                 if (!timestamp.isBefore(now)) {
                     double temperature = hourNode.path("temp_c").asDouble();
-                    hourlyForecasts.add(new HourlyForecast(timestamp, temperature));
+                    double humidity = hourNode.path("humidity").asDouble();
+                    double precipitationProbability = hourNode.path("chance_of_rain").asDouble();
+                    double windSpeed = hourNode.path("wind_kph").asDouble();
+                    hourlyForecasts.add(new HourlyForecast(timestamp, temperature, humidity, precipitationProbability, windSpeed));
                 }
             }
         }

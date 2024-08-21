@@ -12,6 +12,9 @@ import java.util.List;
 public class CombinedHourlyForecast {
     private final LocalDateTime timestamp;
     private final List<Double> temperatures = new ArrayList<>();
+    private final List<Double> humidities = new ArrayList<>();
+    private final List<Double> precipitationProbabilities = new ArrayList<>();
+    private final List<Double> windSpeeds = new ArrayList<>();
 
     public CombinedHourlyForecast(LocalDateTime timestamp) {
         this.timestamp = timestamp;
@@ -26,11 +29,26 @@ public class CombinedHourlyForecast {
         temperatures.add(temperature);
     }
 
+    public void addHumidity(double humidity) {
+        humidities.add(humidity);
+    }
+
+    public void addPrecipitationProbability(double probability) {
+        precipitationProbabilities.add(probability);
+    }
+
+    public void addWindSpeed(double windSpeed) {
+        windSpeeds.add(windSpeed);
+    }
+
     @Override
     public String toString() {
         return "CombinedHourlyForecast{" +
                 "timestamp=" + timestamp +
                 ", temperatures=" + temperatures +
+                ", humidities=" + humidities +
+                ", precipitationProbabilities=" + precipitationProbabilities +
+                ", windSpeeds=" + windSpeeds +
                 '}';
     }
 }
