@@ -10,7 +10,7 @@ import org.springframework.web.client.RestTemplate;
 @Component
 public class AccuWeatherCommand implements WeatherApiCommand {
     private static final String GEO_API_URL = "http://dataservice.accuweather.com/locations/v1/cities/search?apikey=z3rFJdAfM7bmfEaoCiMK3HhihzvK8tN8&q=";
-    private static final String WEATHER_API_URL = "http://dataservice.accuweather.com/forecasts/v1/daily/5day/%s?apikey=z3rFJdAfM7bmfEaoCiMK3HhihzvK8tN8&details=true&metric=true";
+    private static final String WEATHER_API_URL = "https://dataservice.accuweather.com/forecasts/v1/hourly/12hour/%s?apikey=z3rFJdAfM7bmfEaoCiMK3HhihzvK8tN8&details=true&metric=true";
     private static final String TOPIC = "weather-api5-data";
 
     private final RestTemplate restTemplate = new RestTemplate();

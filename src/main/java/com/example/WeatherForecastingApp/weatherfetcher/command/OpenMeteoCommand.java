@@ -12,7 +12,7 @@ public class OpenMeteoCommand implements WeatherApiCommand{
 
     private static final String GEO_API_URL = "https://geocoding-api.open-meteo.com/v1/search?name=";
     private static final String GEO_API_PARAMS = "&count=1&language=en&format=json";
-    private static final String WEATHER_API_URL = "https://api.open-meteo.com/v1/forecast?latitude=%s&longitude=%s&hourly=temperature_2m";
+    private static final String WEATHER_API_URL = "https://api.open-meteo.com/v1/forecast?latitude=%s&longitude=%s&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,wind_speed_10m";
     private static final String TOPIC = "weather-api1-data";
 
     private final RestTemplate restTemplate = new RestTemplate();

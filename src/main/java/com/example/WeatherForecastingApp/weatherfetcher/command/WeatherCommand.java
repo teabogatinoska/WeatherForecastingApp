@@ -12,8 +12,6 @@ public class WeatherCommand implements WeatherApiCommand{
     private static final String TOPIC = "weather-api3-data";
 
     private final RestTemplate restTemplate = new RestTemplate();
-    private final ObjectMapper objectMapper = new ObjectMapper();
-
     @Override
     public void fetchWeatherData(UserWeatherRequestDto requestDto, KafkaTemplate<String, String> kafkaTemplate) {
         String location = requestDto.getLocation();
