@@ -2,6 +2,10 @@ package com.example.WeatherForecastingApp.weatherprocessor.processor;
 
 import com.example.WeatherForecastingApp.weatherprocessor.model.CombinedDailyForecast;
 import com.example.WeatherForecastingApp.weatherprocessor.model.CombinedHourlyForecast;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -14,6 +18,9 @@ import java.util.Map;
 @Service
 public class WeatherProcessorManager {
 
+    @Autowired
+    private KafkaTemplate<String, String> kafkaTemplate;
+    private final ObjectMapper objectMapper = new ObjectMapper();
     private final Map<String, WeatherDataProcessor> processors = new HashMap<>();
 
     public WeatherProcessorManager() {
@@ -33,11 +40,31 @@ public class WeatherProcessorManager {
             Map<LocalDateTime, Integer> hourlyResults = getHourlyData(type, combinedHourlyForecasts);
             Map<LocalDate, Integer> dailyResults = getDailyData(type, combinedDailyForecasts);
 
-            System.out.println("Hourly " + type + " Averages:");
+            Map<String, Object> hourlyMessage = new HashMap<>();
+            hourlyMessage.put("dataType", type);
+            hourlyMessage.put("hourlyResults", hourlyResults);
+
+            Map<String, Object> dailyMessage = new HashMap<>();
+            dailyMessage.put("dataType", type);
+            dailyMessage.put("dailyResults", dailyResults);
+
+            try{
+                String hourlyMessageJson = objectMapper.writeValueAsString(hourlyMessage);
+                kafkaTemplate.send("hourly-weather-data", hourlyMessageJson);
+
+                String dailyMessageJson = objectMapper.writeValueAsString(dailyMessage);
+                kafkaTemplate.send("daily-weather-data", dailyMessageJson);
+            }catch (JsonProcessingException e) {
+                e.printStackTrace();
+            }
+
+            /*System.out.println("Hourly " + type + " Averages:");
             printResults(hourlyResults);
 
             System.out.println("Daily " + type + " Averages:");
             printResults(dailyResults);
+
+             */
         }
     }
 
@@ -58,9 +85,11 @@ public class WeatherProcessorManager {
         return new HashMap<>();
     }
 
-    private void printResults(Map<?, Integer> results) {
+    /*private void printResults(Map<?, Integer> results) {
         for (Map.Entry<?, Integer> entry : results.entrySet()) {
             System.out.println(entry.getKey() + ": " + entry.getValue());
         }
     }
+
+     */
 }
