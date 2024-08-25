@@ -33,7 +33,7 @@ public class WeatherProcessorManager {
     }
 
     public void processAllData(Map<LocalDateTime, CombinedHourlyForecast> combinedHourlyForecasts,
-                               Map<LocalDate, CombinedDailyForecast> combinedDailyForecasts) {
+                               Map<LocalDate, CombinedDailyForecast> combinedDailyForecasts, String username) {
         List<String> dataTypes = Arrays.asList("temperature", "humidity", "precipitation", "windSpeed");
 
         for (String type : dataTypes) {
@@ -43,10 +43,12 @@ public class WeatherProcessorManager {
             Map<String, Object> hourlyMessage = new HashMap<>();
             hourlyMessage.put("dataType", type);
             hourlyMessage.put("hourlyResults", hourlyResults);
+            hourlyMessage.put("username", username);
 
             Map<String, Object> dailyMessage = new HashMap<>();
             dailyMessage.put("dataType", type);
             dailyMessage.put("dailyResults", dailyResults);
+            hourlyMessage.put("username", username);
 
             try{
                 String hourlyMessageJson = objectMapper.writeValueAsString(hourlyMessage);

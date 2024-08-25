@@ -2,7 +2,7 @@ package com.example.WeatherForecastingApp.weatherpresenter.consumer;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.jvnet.hk2.annotations.Service;
+import org.springframework.stereotype.Service;
 import org.springframework.kafka.annotation.KafkaListener;
 
 import java.time.LocalDate;
@@ -16,6 +16,7 @@ public class WeatherPresenterService {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final Map<String, Map<LocalDateTime, Integer>> hourlyDataStore = new HashMap<>();
     private final Map<String, Map<LocalDate, Integer>> dailyDataStore = new HashMap<>();
+    String currentUser;
 
 
     @KafkaListener(topics = "hourly-weather-data", groupId = "weather-presenter-group")
@@ -24,6 +25,7 @@ public class WeatherPresenterService {
             Map<String, Object> message = objectMapper.readValue(messageJson, new TypeReference<Map<String, Object>>() {});
 
             String dataType = (String) message.get("dataType");
+            this.currentUser = (String) message.get("username");
             Map<String, Integer> hourlyResults = (Map<String, Integer>) message.get("hourlyResults");
 
             Map<LocalDateTime, Integer> hourlyResultsConverted = new HashMap<>();
@@ -44,6 +46,7 @@ public class WeatherPresenterService {
             Map<String, Object> message = objectMapper.readValue(messageJson, new TypeReference<Map<String, Object>>() {});
 
             String dataType = (String) message.get("dataType");
+            this.currentUser = (String) message.get("username");
             Map<String, Integer> dailyResults = (Map<String, Integer>) message.get("dailyResults");
 
             Map<LocalDate, Integer> dailyResultsConverted = new HashMap<>();
@@ -58,11 +61,17 @@ public class WeatherPresenterService {
         }
     }
 
-    public Map<String, Map<LocalDateTime, Integer>> getHourlyData() {
-        return hourlyDataStore;
+    public Map<String, Object> getHourlyData() {
+        Map<String, Object> result = new HashMap<>();
+        result.put("username", currentUser);
+        result.put("hourlyData", hourlyDataStore);
+        return result;
     }
 
-    public Map<String, Map<LocalDate, Integer>> getDailyData() {
-        return dailyDataStore;
+    public Map<String, Object> getDailyData() {
+        Map<String, Object> result = new HashMap<>();
+        result.put("username", currentUser);
+        result.put("dailyData", dailyDataStore);
+        return result;
     }
 }

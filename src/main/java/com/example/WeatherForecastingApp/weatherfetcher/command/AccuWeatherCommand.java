@@ -7,6 +7,9 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Component
 public class AccuWeatherCommand implements WeatherApiCommand {
     private static final String GEO_API_URL = "http://dataservice.accuweather.com/locations/v1/cities/search?apikey=z3rFJdAfM7bmfEaoCiMK3HhihzvK8tN8&q=";
@@ -21,11 +24,20 @@ public class AccuWeatherCommand implements WeatherApiCommand {
     public void fetchWeatherData(UserWeatherRequestDto requestDto, KafkaTemplate<String, String> kafkaTemplate) {
         String location = requestDto.getLocation();
         String locationId = fetchLocationId(location);
+        try {
+            if (locationId != null) {
+                String apiUrl = String.format(WEATHER_API_URL, locationId);
+                String weatherData = fetchWeatherDataFromAPI(apiUrl);
 
-        if (locationId != null) {
-            String apiUrl = String.format(WEATHER_API_URL, locationId);
-            String weatherData = fetchWeatherDataFromAPI(apiUrl);
-            kafkaTemplate.send(TOPIC, weatherData);
+                Map<String, Object> message = new HashMap<>();
+                message.put("username", requestDto.getUsername());
+                message.put("weatherData", weatherData);
+
+                String messageJson = objectMapper.writeValueAsString(message);
+                kafkaTemplate.send(TOPIC, messageJson);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
