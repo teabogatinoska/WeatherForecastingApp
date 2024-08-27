@@ -1,14 +1,16 @@
-package com.example.WeatherForecastingApp.weatherprocessor.processor;
+package com.example.WeatherForecastingApp.weatherprocessor.processor.impl;
 
 import com.example.WeatherForecastingApp.weatherprocessor.model.CombinedDailyForecast;
 import com.example.WeatherForecastingApp.weatherprocessor.model.CombinedHourlyForecast;
+import com.example.WeatherForecastingApp.weatherprocessor.processor.DailyAverageDataProcessor;
+import com.example.WeatherForecastingApp.weatherprocessor.processor.HourlyDataProcessor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class ForecastWindProcessor implements WeatherDataProcessor{
+public class ForecastWindProcessor implements HourlyDataProcessor, DailyAverageDataProcessor {
 
     @Override
     public Map<LocalDateTime, Integer> calculateHourlyData(Map<LocalDateTime, CombinedHourlyForecast> combinedHourlyForecasts) {

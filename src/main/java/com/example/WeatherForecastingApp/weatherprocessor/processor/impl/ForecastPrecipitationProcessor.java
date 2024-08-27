@@ -1,4 +1,4 @@
-package com.example.WeatherForecastingApp.weatherprocessor.processor;
+package com.example.WeatherForecastingApp.weatherprocessor.processor.impl;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -7,8 +7,10 @@ import java.util.TreeMap;
 
 import com.example.WeatherForecastingApp.weatherprocessor.model.CombinedDailyForecast;
 import com.example.WeatherForecastingApp.weatherprocessor.model.CombinedHourlyForecast;
+import com.example.WeatherForecastingApp.weatherprocessor.processor.DailyAverageDataProcessor;
+import com.example.WeatherForecastingApp.weatherprocessor.processor.HourlyDataProcessor;
 
-public class ForecastPrecipitationProcessor implements WeatherDataProcessor{
+public class ForecastPrecipitationProcessor implements HourlyDataProcessor, DailyAverageDataProcessor {
 
     @Override
     public Map<LocalDateTime, Integer> calculateHourlyData(Map<LocalDateTime, CombinedHourlyForecast> combinedHourlyForecasts) {
@@ -29,7 +31,7 @@ public class ForecastPrecipitationProcessor implements WeatherDataProcessor{
     }
 
     @Override
-    public Map<LocalDate, Integer> calculateDailyData(Map<LocalDate, CombinedDailyForecast> combinedDailyForecasts) {
+    public Map<LocalDate,  Integer> calculateDailyData(Map<LocalDate, CombinedDailyForecast> combinedDailyForecasts) {
         Map<LocalDate, Integer> averageDailyPrecipitation = new TreeMap<>();
 
         for (Map.Entry<LocalDate, CombinedDailyForecast> entry : combinedDailyForecasts.entrySet()) {
