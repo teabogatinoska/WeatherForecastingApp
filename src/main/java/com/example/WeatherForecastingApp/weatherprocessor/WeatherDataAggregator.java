@@ -85,6 +85,7 @@ public class WeatherDataAggregator {
             System.out.println("Processing weather data for topic: " + topic);
             Map<String, Object> message = objectMapper.readValue(messageJson, new TypeReference<Map<String, Object>>() {});
             String username = (String) message.get("username");
+            String location = (String) message.get("location");
             String jsonData = (String) message.get("weatherData");
 
             WeatherDataParser parser = parsers.get(topic);
@@ -94,7 +95,7 @@ public class WeatherDataAggregator {
                 processedApis.add(topic);
 
                 if (allApisProcessed()) {
-                    weatherProcessorManager.processAllData(combinedHourlyForecasts, combinedDailyForecasts, username);
+                    weatherProcessorManager.processAllData(combinedHourlyForecasts, combinedDailyForecasts, username, location);
                     processedApis.clear();
                 }
 

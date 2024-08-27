@@ -18,6 +18,7 @@ public class WeatherPresenterService {
     private final Map<String, Map<LocalDateTime, Integer>> hourlyDataStore = new HashMap<>();
     private final Map<LocalDate, Map<String, Integer>> dailyDataStore = new TreeMap<>();
     String currentUser;
+    String location;
 
 
     @KafkaListener(topics = "hourly-weather-data", groupId = "weather-presenter-group")
@@ -27,6 +28,7 @@ public class WeatherPresenterService {
             });
 
             this.currentUser = (String) message.get("username");
+            this.location = (String) message.get("location");
             Map<String, Map<String, Integer>> hourlyResults = (Map<String, Map<String, Integer>>) message.get("hourlyResults");
 
             for (Map.Entry<String, Map<String, Integer>> entry : hourlyResults.entrySet()) {
@@ -51,6 +53,7 @@ public class WeatherPresenterService {
             Map<String, Object> message = objectMapper.readValue(messageJson, new TypeReference<>() {
             });
             this.currentUser = (String) message.get("username");
+            this.location = (String) message.get("location");
 
             Map<String, Map<String, Integer>> dailyResults = (Map<String, Map<String, Integer>>) message.get("dailyResults");
 
@@ -72,6 +75,7 @@ public class WeatherPresenterService {
     public Map<String, Object> getHourlyData() {
         Map<String, Object> result = new HashMap<>();
         result.put("username", currentUser);
+        result.put("location", location);
         result.put("hourlyData", hourlyDataStore);
         return result;
     }
@@ -79,6 +83,7 @@ public class WeatherPresenterService {
     public Map<String, Object> getDailyData() {
         Map<String, Object> result = new HashMap<>();
         result.put("username", currentUser);
+        result.put("location", location);
         result.put("dailyData", dailyDataStore);
         return result;
     }
