@@ -42,6 +42,7 @@ public class ForecastTemperatureProcessor implements HourlyDataProcessor, DailyT
                     .flatMap(hourlyForecast -> hourlyForecast.getTemperatures().stream())
                     .map(temp -> Math.round(temp * 10) / 10.0)
                     .toList();
+            System.out.println("All temperatures for " + date + ": " + allTemperatures);
 
             List<Double> lowestTemperatures = allTemperatures.stream()
                     .sorted()
@@ -52,17 +53,21 @@ public class ForecastTemperatureProcessor implements HourlyDataProcessor, DailyT
                     .sorted(Comparator.reverseOrder())
                     .limit(10)
                     .toList();
+            System.out.println("Lowest 10 temperatures for " + date + ": " + lowestTemperatures);
+            System.out.println("Highest 10 temperatures for " + date + ": " + highestTemperatures);
 
-            double minTemperature = lowestTemperatures.stream()
-                    .min(Double::compare)
+            double averageMinTemperature  = lowestTemperatures.stream()
+                    .mapToDouble(Double::doubleValue)
+                    .average()
                     .orElse(0.0);
 
-            double maxTemperature = highestTemperatures.stream()
-                    .max(Double::compare)
+            double averageMaxTemperature  = highestTemperatures.stream()
+                    .mapToDouble(Double::doubleValue)
+                    .average()
                     .orElse(0.0);
 
-            int roundedMaxTemperature = (int) Math.round(maxTemperature);
-            int roundedMinTemperature = (int) Math.round(minTemperature);
+            int roundedMaxTemperature = (int) Math.round(averageMaxTemperature);
+            int roundedMinTemperature = (int) Math.round(averageMinTemperature);
 
             Map<String, Integer> extremes = new HashMap<>();
             extremes.put("max", roundedMaxTemperature);

@@ -1,5 +1,6 @@
 package com.example.WeatherForecastingApp.weatherprocessor.processor;
 
+import com.example.WeatherForecastingApp.common.RedisCacheService;
 import com.example.WeatherForecastingApp.weatherprocessor.model.CombinedDailyForecast;
 import com.example.WeatherForecastingApp.weatherprocessor.model.CombinedHourlyForecast;
 import com.example.WeatherForecastingApp.weatherprocessor.processor.impl.ForecastHumidityProcessor;
@@ -24,6 +25,8 @@ public class WeatherProcessorManager {
 
     @Autowired
     private KafkaTemplate<String, String> kafkaTemplate;
+    @Autowired
+    private RedisCacheService redisCacheService;
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final Map<String, HourlyDataProcessor> hourlyProcessors = new HashMap<>();
     private final Map<String, DailyAverageDataProcessor> dailyAverageProcessors = new HashMap<>();
@@ -77,6 +80,9 @@ public class WeatherProcessorManager {
         }
         hourlyMessage.put("hourlyResults", hourlyResultsMap);
         dailyMessage.put("dailyResults", dailyResultsMap);
+
+        redisCacheService.cacheHourlyData(location, hourlyResultsMap);
+        redisCacheService.cacheDailyData(location, dailyResultsMap);
 
         sendKafkaMessage("hourly-weather-data", hourlyMessage);
         sendKafkaMessage("daily-weather-data", dailyMessage);

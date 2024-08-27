@@ -145,7 +145,8 @@ public class WeatherDataAggregator {
     }
 
     private boolean allApisProcessed() {
-        return parsers.keySet().equals(processedApis);
+        return processedApis.size() >= 4;
+        //return parsers.keySet().equals(processedApis);
     }
 
 }

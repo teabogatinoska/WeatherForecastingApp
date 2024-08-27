@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
@@ -37,6 +38,9 @@ public class AccuWeatherCommand implements WeatherApiCommand {
                 String messageJson = objectMapper.writeValueAsString(message);
                 kafkaTemplate.send(TOPIC, messageJson);
             }
+            else {
+                System.out.println("Location ID could not be found for: " + location);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -51,6 +55,9 @@ public class AccuWeatherCommand implements WeatherApiCommand {
                 JsonNode firstResult = root.get(0);
                 return firstResult.path("Key").asText();
             }
+        }
+        catch (HttpServerErrorException.ServiceUnavailable e) {
+            System.err.println("AccuWeather API limit exceeded while fetching location ID: " + e.getMessage());
         } catch (Exception e) {
             e.printStackTrace();
         }
