@@ -51,7 +51,6 @@ public class WeatherFetcherService {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            // Handle the exception, e.g., log it or send an error message to a Kafka topic
         }
     }
 

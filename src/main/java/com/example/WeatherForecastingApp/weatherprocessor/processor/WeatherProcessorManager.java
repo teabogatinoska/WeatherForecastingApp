@@ -2,6 +2,14 @@ package com.example.WeatherForecastingApp.weatherprocessor.processor;
 
 import com.example.WeatherForecastingApp.weatherprocessor.model.CombinedDailyForecast;
 import com.example.WeatherForecastingApp.weatherprocessor.model.CombinedHourlyForecast;
+import com.example.WeatherForecastingApp.weatherprocessor.processor.impl.ForecastHumidityProcessor;
+import com.example.WeatherForecastingApp.weatherprocessor.processor.impl.ForecastPrecipitationProcessor;
+import com.example.WeatherForecastingApp.weatherprocessor.processor.impl.ForecastTemperatureProcessor;
+import com.example.WeatherForecastingApp.weatherprocessor.processor.impl.ForecastWindProcessor;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -14,36 +22,69 @@ import java.util.Map;
 @Service
 public class WeatherProcessorManager {
 
-    private final Map<String, WeatherDataProcessor> processors = new HashMap<>();
+    @Autowired
+    private KafkaTemplate<String, String> kafkaTemplate;
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final Map<String, HourlyDataProcessor> hourlyProcessors = new HashMap<>();
+    private final Map<String, DailyAverageDataProcessor> dailyAverageProcessors = new HashMap<>();
+    private final Map<String, DailyTemperatureExtremesProcessor> dailyTemperatureExtremesProcessors = new HashMap<>();
 
     public WeatherProcessorManager() {
 
-        processors.put("temperature", new ForecastTemperatureProcessor());
-        processors.put("humidity", new ForecastHumidityProcessor());
-        processors.put("precipitation", new ForecastPrecipitationProcessor());
-        processors.put("windSpeed", new ForecastWindProcessor());
+        hourlyProcessors.put("temperature", new ForecastTemperatureProcessor());
+        hourlyProcessors.put("humidity", new ForecastHumidityProcessor());
+        hourlyProcessors.put("precipitation", new ForecastPrecipitationProcessor());
+        hourlyProcessors.put("windSpeed", new ForecastWindProcessor());
+
+        dailyAverageProcessors.put("humidity", new ForecastHumidityProcessor());
+        dailyAverageProcessors.put("precipitation", new ForecastPrecipitationProcessor());
+        dailyAverageProcessors.put("windSpeed", new ForecastWindProcessor());
+
+        dailyTemperatureExtremesProcessors.put("temperature", new ForecastTemperatureProcessor());
 
     }
 
     public void processAllData(Map<LocalDateTime, CombinedHourlyForecast> combinedHourlyForecasts,
-                               Map<LocalDate, CombinedDailyForecast> combinedDailyForecasts) {
+                               Map<LocalDate, CombinedDailyForecast> combinedDailyForecasts, String username, String location) {
         List<String> dataTypes = Arrays.asList("temperature", "humidity", "precipitation", "windSpeed");
+
+        Map<String, Object> hourlyMessage = new HashMap<>();
+        Map<String, Object> dailyMessage = new HashMap<>();
+        hourlyMessage.put("username", username);
+        hourlyMessage.put("location", location);
+        dailyMessage.put("username", username);
+        dailyMessage.put("location", location);
+
+        Map<String, Map<LocalDateTime, Integer>> hourlyResultsMap = new HashMap<>();
+        Map<LocalDate, Map<String, Integer>> dailyResultsMap = new HashMap<>();
 
         for (String type : dataTypes) {
             Map<LocalDateTime, Integer> hourlyResults = getHourlyData(type, combinedHourlyForecasts);
-            Map<LocalDate, Integer> dailyResults = getDailyData(type, combinedDailyForecasts);
+            hourlyResultsMap.put(type, hourlyResults);
 
-            System.out.println("Hourly " + type + " Averages:");
-            printResults(hourlyResults);
 
-            System.out.println("Daily " + type + " Averages:");
-            printResults(dailyResults);
+            if ("temperature".equals(type)) {
+                Map<LocalDate, Map<String, Integer>> dailyTemperatureExtremes = getDailyTemperatureExtremes(type, combinedDailyForecasts);
+                dailyTemperatureExtremes.forEach((date, extremes) -> {
+                    dailyResultsMap.computeIfAbsent(date, k -> new HashMap<>()).putAll(extremes);
+                });
+            } else {
+                Map<LocalDate, Integer> dailyResults = getDailyData(type, combinedDailyForecasts);
+                dailyResults.forEach((date, value) -> {
+                    dailyResultsMap.computeIfAbsent(date, k -> new HashMap<>()).put(type, value);
+                });
+            }
         }
+        hourlyMessage.put("hourlyResults", hourlyResultsMap);
+        dailyMessage.put("dailyResults", dailyResultsMap);
+
+        sendKafkaMessage("hourly-weather-data", hourlyMessage);
+        sendKafkaMessage("daily-weather-data", dailyMessage);
     }
 
 
     public Map<LocalDateTime, Integer> getHourlyData(String type, Map<LocalDateTime, CombinedHourlyForecast> combinedHourlyForecasts) {
-        WeatherDataProcessor processor = processors.get(type);
+        HourlyDataProcessor processor = hourlyProcessors.get(type);
         if (processor != null) {
             return processor.calculateHourlyData(combinedHourlyForecasts);
         }
@@ -51,16 +92,27 @@ public class WeatherProcessorManager {
     }
 
     public Map<LocalDate, Integer> getDailyData(String type, Map<LocalDate, CombinedDailyForecast> combinedDailyForecasts) {
-        WeatherDataProcessor processor = processors.get(type);
+        DailyAverageDataProcessor processor = dailyAverageProcessors.get(type);
         if (processor != null) {
             return processor.calculateDailyData(combinedDailyForecasts);
         }
         return new HashMap<>();
     }
 
-    private void printResults(Map<?, Integer> results) {
-        for (Map.Entry<?, Integer> entry : results.entrySet()) {
-            System.out.println(entry.getKey() + ": " + entry.getValue());
+    private Map<LocalDate, Map<String, Integer>> getDailyTemperatureExtremes(String type, Map<LocalDate, CombinedDailyForecast> combinedDailyForecasts) {
+        DailyTemperatureExtremesProcessor processor = dailyTemperatureExtremesProcessors.get(type);
+        if (processor != null) {
+            return processor.calculateDailyTemperatureExtremes(combinedDailyForecasts);
+        }
+        return new HashMap<>();
+    }
+
+    private void sendKafkaMessage(String topic, Map<String, Object> message) {
+        try {
+            String messageJson = objectMapper.writeValueAsString(message);
+            kafkaTemplate.send(topic, messageJson);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
         }
     }
 }

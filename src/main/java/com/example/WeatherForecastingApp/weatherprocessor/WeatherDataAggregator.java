@@ -6,6 +6,8 @@ import com.example.WeatherForecastingApp.weatherprocessor.model.HourlyForecast;
 import com.example.WeatherForecastingApp.weatherprocessor.model.WeatherData;
 import com.example.WeatherForecastingApp.weatherprocessor.parser.*;
 import com.example.WeatherForecastingApp.weatherprocessor.processor.WeatherProcessorManager;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -27,6 +29,7 @@ public class WeatherDataAggregator {
 
     private final WeatherProcessorManager weatherProcessorManager;
     private final Set<String> processedApis;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Autowired
     public WeatherDataAggregator(List<WeatherDataParser> parserList, WeatherProcessorManager weatherProcessorManager) {
@@ -53,33 +56,37 @@ public class WeatherDataAggregator {
     }
 
     @KafkaListener(topics = "weather-api1-data", groupId = "weather-processor-group")
-    public void receiveOpenMeteoData(String jsonData) {
-        processWeatherData("weather-api1-data", jsonData);
+    public void receiveOpenMeteoData(String messageJson) {
+        processWeatherData("weather-api1-data", messageJson);
     }
 
     @KafkaListener(topics = "weather-api2-data")
-    public void receiveTomorrowIoData(String jsonData) {
-        processWeatherData("weather-api2-data", jsonData);
+    public void receiveTomorrowIoData(String messageJson) {
+        processWeatherData("weather-api2-data", messageJson);
     }
 
     @KafkaListener(topics = "weather-api3-data")
-    public void receiveWeatherApiData(String jsonData) {
-        processWeatherData("weather-api3-data", jsonData);
+    public void receiveWeatherApiData(String messageJson) {
+        processWeatherData("weather-api3-data", messageJson);
     }
 
     @KafkaListener(topics = "weather-api4-data")
-    public void receiveVissualCrossingData(String jsonData) {
-        processWeatherData("weather-api4-data", jsonData);
+    public void receiveVissualCrossingData(String messageJson) {
+        processWeatherData("weather-api4-data", messageJson);
     }
 
     @KafkaListener(topics = "weather-api5-data")
-    public void receiveAccuWeatherData(String jsonData) {
-        processWeatherData("weather-api5-data", jsonData);
+    public void receiveAccuWeatherData(String messageJson) {
+        processWeatherData("weather-api5-data", messageJson);
     }
 
-    private void processWeatherData(String topic, String jsonData) {
+    private void processWeatherData(String topic, String messageJson) {
         try {
             System.out.println("Processing weather data for topic: " + topic);
+            Map<String, Object> message = objectMapper.readValue(messageJson, new TypeReference<Map<String, Object>>() {});
+            String username = (String) message.get("username");
+            String location = (String) message.get("location");
+            String jsonData = (String) message.get("weatherData");
 
             WeatherDataParser parser = parsers.get(topic);
             if (parser != null) {
@@ -88,7 +95,7 @@ public class WeatherDataAggregator {
                 processedApis.add(topic);
 
                 if (allApisProcessed()) {
-                    weatherProcessorManager.processAllData(combinedHourlyForecasts, combinedDailyForecasts);
+                    weatherProcessorManager.processAllData(combinedHourlyForecasts, combinedDailyForecasts, username, location);
                     processedApis.clear();
                 }
 

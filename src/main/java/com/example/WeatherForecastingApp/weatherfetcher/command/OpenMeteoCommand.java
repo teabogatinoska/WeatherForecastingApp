@@ -7,8 +7,11 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Component
-public class OpenMeteoCommand implements WeatherApiCommand{
+public class OpenMeteoCommand implements WeatherApiCommand {
 
     private static final String GEO_API_URL = "https://geocoding-api.open-meteo.com/v1/search?name=";
     private static final String GEO_API_PARAMS = "&count=1&language=en&format=json";
@@ -23,11 +26,21 @@ public class OpenMeteoCommand implements WeatherApiCommand{
     public void fetchWeatherData(UserWeatherRequestDto requestDto, KafkaTemplate<String, String> kafkaTemplate) {
         String location = requestDto.getLocation();
         double[] coordinates = fetchCoordinates(location);
+        try {
+            if (coordinates != null) {
+                String apiUrl = String.format(WEATHER_API_URL, coordinates[0], coordinates[1]);
+                String weatherData = fetchWeatherDataFromAPI(apiUrl);
 
-        if (coordinates != null) {
-            String apiUrl = String.format(WEATHER_API_URL, coordinates[0], coordinates[1]);
-            String weatherData = fetchWeatherDataFromAPI(apiUrl);
-            kafkaTemplate.send(TOPIC, weatherData);
+                Map<String, Object> message = new HashMap<>();
+                message.put("username", requestDto.getUsername());
+                message.put("location", requestDto.getLocation());
+                message.put("weatherData", weatherData);
+
+                String messageJson = objectMapper.writeValueAsString(message);
+                kafkaTemplate.send(TOPIC, messageJson);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
