@@ -15,32 +15,32 @@ import java.util.TreeMap;
 public class WeatherPresenterService {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
-    private final Map<String, Map<LocalDateTime, Integer>> hourlyDataStore = new HashMap<>();
-    private final Map<LocalDate, Map<String, Integer>> dailyDataStore = new TreeMap<>();
-    String currentUser;
-    String location;
+    private final Map<String, Map<String, Map<LocalDateTime, Map<String, Integer>>>>  hourlyDataStore = new HashMap<>();
+    private final Map<String, Map<String, Map<LocalDate, Map<String, Integer>>>> dailyDataStore = new TreeMap<>();
 
 
     @KafkaListener(topics = "hourly-weather-data", groupId = "weather-presenter-group")
     public void receiveHourlyData(String messageJson) {
         try {
-            Map<String, Object> message = objectMapper.readValue(messageJson, new TypeReference<>() {
-            });
+            Map<String, Object> message = objectMapper.readValue(messageJson, new TypeReference<>() {});
 
-            this.currentUser = (String) message.get("username");
-            this.location = (String) message.get("location");
+            String currentUser = (String) message.get("username");
+            String location = (String) message.get("location");
             Map<String, Map<String, Integer>> hourlyResults = (Map<String, Map<String, Integer>>) message.get("hourlyResults");
+
+            hourlyDataStore.putIfAbsent(currentUser, new HashMap<>());
+            hourlyDataStore.get(currentUser).putIfAbsent(location, new TreeMap<>());
 
             for (Map.Entry<String, Map<String, Integer>> entry : hourlyResults.entrySet()) {
                 String dataType = entry.getKey();
-                Map<LocalDateTime, Integer> hourlyResultsConverted = new TreeMap<>();
+                Map<LocalDateTime, Map<String, Integer>> hourlyResultsForLocation = hourlyDataStore.get(currentUser).get(location);
 
                 for (Map.Entry<String, Integer> timeEntry : entry.getValue().entrySet()) {
                     LocalDateTime time = LocalDateTime.parse(timeEntry.getKey());
-                    hourlyResultsConverted.put(time, timeEntry.getValue());
-                }
+                    hourlyResultsForLocation.putIfAbsent(time, new HashMap<>());
 
-                hourlyDataStore.put(dataType, hourlyResultsConverted);
+                    hourlyResultsForLocation.get(time).put(dataType, timeEntry.getValue());
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -52,39 +52,51 @@ public class WeatherPresenterService {
         try {
             Map<String, Object> message = objectMapper.readValue(messageJson, new TypeReference<>() {
             });
-            this.currentUser = (String) message.get("username");
-            this.location = (String) message.get("location");
+            String currentUser = (String) message.get("username");
+            String location = (String) message.get("location");
 
             Map<String, Map<String, Integer>> dailyResults = (Map<String, Map<String, Integer>>) message.get("dailyResults");
+            dailyDataStore.putIfAbsent(currentUser, new HashMap<>());
+            dailyDataStore.get(currentUser).putIfAbsent(location, new TreeMap<>());
 
             for (Map.Entry<String, Map<String, Integer>> dateEntry : dailyResults.entrySet()) {
                 LocalDate date = LocalDate.parse(dateEntry.getKey());
                 Map<String, Integer> dataMap = dateEntry.getValue();
 
-                if (!dailyDataStore.containsKey(date)) {
-                    dailyDataStore.put(date, new TreeMap<>());
-                }
+                dailyDataStore.get(currentUser).get(location).put(date, new TreeMap<>(dataMap));
 
-                dailyDataStore.get(date).putAll(dataMap);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public Map<String, Object> getHourlyData() {
+    public Map<String, Object> getHourlyData(String username, String location) {
         Map<String, Object> result = new HashMap<>();
-        result.put("username", currentUser);
-        result.put("location", location);
-        result.put("hourlyData", hourlyDataStore);
+
+        if (hourlyDataStore.containsKey(username) && hourlyDataStore.get(username).containsKey(location)) {
+            result.put("username", username);
+            result.put("location", location);
+            result.put("hourlyData", new TreeMap<>(hourlyDataStore.get(username).get(location)));
+        } else {
+            throw new IllegalArgumentException("No matching hourly data found for the provided username and location.");
+        }
+
         return result;
     }
 
-    public Map<String, Object> getDailyData() {
+    public Map<String, Object> getDailyData(String username, String location) {
         Map<String, Object> result = new HashMap<>();
-        result.put("username", currentUser);
-        result.put("location", location);
-        result.put("dailyData", dailyDataStore);
+
+        if (dailyDataStore.containsKey(username) && dailyDataStore.get(username).containsKey(location)) {
+            result.put("username", username);
+            result.put("location", location);
+            result.put("dailyData", new TreeMap<>(dailyDataStore.get(username).get(location)));
+        } else {
+            throw new IllegalArgumentException("No matching daily data found for the provided username and location.");
+        }
+
         return result;
+
     }
 }
