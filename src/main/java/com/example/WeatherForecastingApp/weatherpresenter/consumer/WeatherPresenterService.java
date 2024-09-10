@@ -15,15 +15,14 @@ import java.util.TreeMap;
 public class WeatherPresenterService {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
-    private final Map<String, Map<String, Map<LocalDateTime, Integer>>> hourlyDataStore = new HashMap<>();
+    private final Map<String, Map<String, Map<LocalDateTime, Map<String, Integer>>>>  hourlyDataStore = new HashMap<>();
     private final Map<String, Map<String, Map<LocalDate, Map<String, Integer>>>> dailyDataStore = new TreeMap<>();
 
 
     @KafkaListener(topics = "hourly-weather-data", groupId = "weather-presenter-group")
     public void receiveHourlyData(String messageJson) {
         try {
-            Map<String, Object> message = objectMapper.readValue(messageJson, new TypeReference<>() {
-            });
+            Map<String, Object> message = objectMapper.readValue(messageJson, new TypeReference<>() {});
 
             String currentUser = (String) message.get("username");
             String location = (String) message.get("location");
@@ -34,15 +33,14 @@ public class WeatherPresenterService {
 
             for (Map.Entry<String, Map<String, Integer>> entry : hourlyResults.entrySet()) {
                 String dataType = entry.getKey();
-                Map<LocalDateTime, Integer> hourlyResultsConverted = new TreeMap<>();
+                Map<LocalDateTime, Map<String, Integer>> hourlyResultsForLocation = hourlyDataStore.get(currentUser).get(location);
 
                 for (Map.Entry<String, Integer> timeEntry : entry.getValue().entrySet()) {
                     LocalDateTime time = LocalDateTime.parse(timeEntry.getKey());
-                    hourlyResultsConverted.put(time, timeEntry.getValue());
+                    hourlyResultsForLocation.putIfAbsent(time, new HashMap<>());
+
+                    hourlyResultsForLocation.get(time).put(dataType, timeEntry.getValue());
                 }
-
-                hourlyDataStore.get(currentUser).get(location).putAll(hourlyResultsConverted);
-
             }
         } catch (Exception e) {
             e.printStackTrace();
