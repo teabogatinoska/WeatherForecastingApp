@@ -17,7 +17,7 @@ public class ApiGateway {
     }
 
     @Bean
-    @LoadBalanced
+    //@LoadBalanced
     RestTemplate restTemplate() {
         return new RestTemplate();
     }

@@ -1,4 +1,4 @@
-package com.example.WeatherForecastingApp.authentication.payload.response;
+package com.example.WeatherForecastingApp.common.dto.response;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -15,6 +15,8 @@ public class JwtResponse {
     private String email;
     private List<String> roles;
 
+    public JwtResponse() {
+    }
     public JwtResponse(String accessToken, Long id, String username, String email, List<String> roles) {
         this.token = accessToken;
         this.id = id;

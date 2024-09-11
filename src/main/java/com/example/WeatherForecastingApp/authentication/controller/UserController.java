@@ -1,6 +1,6 @@
 package com.example.WeatherForecastingApp.authentication.controller;
 
-import com.example.WeatherForecastingApp.authentication.dto.LocationDto;
+import com.example.WeatherForecastingApp.common.dto.LocationDto;
 import com.example.WeatherForecastingApp.authentication.model.Location;
 import com.example.WeatherForecastingApp.authentication.model.User;
 import com.example.WeatherForecastingApp.authentication.service.UserService;
@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/user")
 public class UserController {
     @Autowired
     private UserService userService;
@@ -30,7 +30,7 @@ public class UserController {
     }
 
     @PostMapping("/{userId}/recent-search")
-    public ResponseEntity<User> addRecentSearch(@PathVariable Long userId, @RequestBody LocationDto locationDto) {
+    public ResponseEntity<User> updateRecentSearch(@PathVariable Long userId, @RequestBody LocationDto locationDto) {
         User user = userService.addRecentSearch(userId, locationDto.getName(), locationDto.getCountry(),
                 locationDto.getLatitude(), locationDto.getLongitude());
         return ResponseEntity.ok(user);
@@ -45,4 +45,5 @@ public class UserController {
     public ResponseEntity<List<Location>> getRecentSearches(@PathVariable Long userId) {
         return ResponseEntity.ok(userService.getRecentSearches(userId));
     }
+
 }
