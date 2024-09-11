@@ -1,5 +1,6 @@
 package com.example.WeatherForecastingApp.common;
 
+import com.example.WeatherForecastingApp.authentication.model.Location;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,7 +9,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -72,6 +72,8 @@ public class RedisCacheService {
         }
         return null;
     }
+
+
     public void clearCache(String key) {
         redisTemplate.delete(key);
     }
