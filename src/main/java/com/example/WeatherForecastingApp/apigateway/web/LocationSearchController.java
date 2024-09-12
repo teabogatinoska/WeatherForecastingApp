@@ -1,7 +1,6 @@
 package com.example.WeatherForecastingApp.apigateway.web;
 
 import com.example.WeatherForecastingApp.apigateway.service.LocationSearchService;
-import com.example.WeatherForecastingApp.authentication.model.User;
 import com.example.WeatherForecastingApp.common.dto.LocationDto;
 import com.example.WeatherForecastingApp.apigateway.service.GeoApiService;
 import com.fasterxml.jackson.core.JsonProcessingException;

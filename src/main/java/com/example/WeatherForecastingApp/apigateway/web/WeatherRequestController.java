@@ -7,8 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.kafka.core.KafkaTemplate;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/weather")
 public class WeatherRequestController {
