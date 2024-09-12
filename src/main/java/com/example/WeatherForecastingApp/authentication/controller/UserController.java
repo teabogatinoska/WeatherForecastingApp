@@ -16,7 +16,7 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    @PostMapping("/{userId}/favorite")
+    @PostMapping("/{userId}/favorite-location")
     public ResponseEntity<User> addFavoriteLocation(@PathVariable Long userId, @RequestBody LocationDto locationDto) {
         User user = userService.addFavoriteLocation(userId, locationDto.getName(), locationDto.getCountry(),
                 locationDto.getLatitude(), locationDto.getLongitude());

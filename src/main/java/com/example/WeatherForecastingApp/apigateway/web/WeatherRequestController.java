@@ -30,10 +30,7 @@ public class WeatherRequestController {
 
         return "Weather request for " + requestDto.getLocation() + " by user " + requestDto.getUsername() + " has been received";
     }
-    @GetMapping("/recent-searches/{userId}")
-    public List<LocationDto> getRecentSearches(@PathVariable Long userId) {
-        return locationSearchService.getRecentSearches(userId);
-    }
+
     /*private String createEvent(UserWeatherRequestDto requestDto) {
         return "{\"username\": \"" + requestDto.getUsername() + "\", \"location\": \"" + requestDto.getLocation() + "\"}";
     }

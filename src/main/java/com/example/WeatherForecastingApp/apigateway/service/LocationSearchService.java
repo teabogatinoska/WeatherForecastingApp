@@ -40,6 +40,24 @@ public class LocationSearchService {
                 new ParameterizedTypeReference<List<LocationDto>>() {}
         );
 
-        return response.getBody(); // return the list of LocationDto
+        return response.getBody();
     }
+
+    public void addFavoriteLocation(Long userId, LocationDto locationDto) {
+        String url = authServiceUrl + "/user/" + userId + "/favorite-location";
+        restTemplate.postForObject(url, locationDto, Void.class);
+    }
+
+    public List<LocationDto> getFavoriteLocations(Long userId) {
+        String url = authServiceUrl + "/user/" + userId + "/favorites";
+        ResponseEntity<List<LocationDto>> response = restTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<List<LocationDto>>() {}
+        );
+        return response.getBody();
+    }
+
+
 }

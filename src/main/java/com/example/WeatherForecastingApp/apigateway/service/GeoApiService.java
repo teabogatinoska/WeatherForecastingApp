@@ -16,14 +16,13 @@ import java.util.List;
 @Service
 public class GeoApiService {
 
-    private final RestTemplate restTemplate;
+    private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper;
     private static final String GEO_API_URL = "https://geocoding-api.open-meteo.com/v1/search?name=%s&language=en&format=json";
 
 
     @Autowired
-    public GeoApiService(RestTemplate restTemplate, ObjectMapper objectMapper) {
-        this.restTemplate = restTemplate;
+    public GeoApiService( ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
     }
 
