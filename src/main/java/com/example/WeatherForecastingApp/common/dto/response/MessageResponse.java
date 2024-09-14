@@ -1,7 +1,9 @@
-package com.example.WeatherForecastingApp.authentication.payload.response;
+package com.example.WeatherForecastingApp.common.dto.response;
 
 public class MessageResponse {
     private String message;
+
+    public MessageResponse() {}
 
     public MessageResponse(String message) {
         this.message = message;

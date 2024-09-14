@@ -3,10 +3,10 @@ package com.example.WeatherForecastingApp.authentication.controller;
 import com.example.WeatherForecastingApp.authentication.model.ERole;
 import com.example.WeatherForecastingApp.authentication.model.Role;
 import com.example.WeatherForecastingApp.authentication.model.User;
-import com.example.WeatherForecastingApp.authentication.payload.request.LoginRequest;
-import com.example.WeatherForecastingApp.authentication.payload.request.SignUpRequest;
-import com.example.WeatherForecastingApp.authentication.payload.response.JwtResponse;
-import com.example.WeatherForecastingApp.authentication.payload.response.MessageResponse;
+import com.example.WeatherForecastingApp.common.dto.request.LoginRequest;
+import com.example.WeatherForecastingApp.common.dto.request.SignUpRequest;
+import com.example.WeatherForecastingApp.common.dto.response.JwtResponse;
+import com.example.WeatherForecastingApp.common.dto.response.MessageResponse;
 import com.example.WeatherForecastingApp.authentication.repository.RoleRepository;
 import com.example.WeatherForecastingApp.authentication.repository.UserRepository;
 import com.example.WeatherForecastingApp.authentication.security.jwt.JwtUtils;
@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/auth")
 public class AuthController {
     @Autowired
     AuthenticationManager authenticationManager;
@@ -47,7 +47,7 @@ public class AuthController {
 
     @PostMapping("/signin")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
-
+        System.out.println("INSIDE");
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
 

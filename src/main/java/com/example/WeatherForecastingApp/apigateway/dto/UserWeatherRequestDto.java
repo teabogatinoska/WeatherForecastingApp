@@ -9,6 +9,7 @@ import lombok.Setter;
 @Setter
 public class UserWeatherRequestDto {
 
+    private Long userId;
     private String username;
     private String location;
 
@@ -20,5 +21,7 @@ public class UserWeatherRequestDto {
         this.username = username;
         this.location = location;
     }
+
+
 
 }

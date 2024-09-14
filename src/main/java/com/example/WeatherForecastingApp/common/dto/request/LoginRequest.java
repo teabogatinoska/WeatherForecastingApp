@@ -1,4 +1,4 @@
-package com.example.WeatherForecastingApp.authentication.payload.request;
+package com.example.WeatherForecastingApp.common.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 

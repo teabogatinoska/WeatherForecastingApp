@@ -15,7 +15,7 @@ public class ApiSecurityConfig {
         http
                 .csrf().disable()
                 .authorizeHttpRequests((requests) -> requests
-                        .requestMatchers("/api/weather/**").permitAll()
+                        .requestMatchers("/api/weather/**", "/api/auth/**", "/api/location/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .httpBasic();

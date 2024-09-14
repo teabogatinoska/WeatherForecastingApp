@@ -9,6 +9,8 @@ import lombok.Setter;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.List;
+import java.util.ArrayList;
 
 @Entity
 @Table(name = "users",
@@ -41,6 +43,21 @@ public class User {
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id"))
     private Set<Role> roles = new HashSet<>();
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "user_favorites",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "location_id"))
+    private Set<Location> favoriteCities = new HashSet<>();
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "user_recent_searches",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "location_id"))
+    private List<Location> recentSearches = new ArrayList<>();
+
     public User() {
     }
 
@@ -48,5 +65,23 @@ public class User {
         this.username = username;
         this.email = email;
         this.password = password;
+    }
+
+    public void addFavoriteCity(Location location) {
+        this.favoriteCities.add(location);
+    }
+
+    public void removeFavoriteCity(Location location) {
+        this.favoriteCities.remove(location);
+    }
+
+    public void addRecentSearch(Location location) {
+        if (recentSearches.contains(location)) {
+            recentSearches.remove(location);
+        }
+        recentSearches.add(0, location);
+        if (recentSearches.size() > 5) {
+            recentSearches.remove(5);
+        }
     }
 }
