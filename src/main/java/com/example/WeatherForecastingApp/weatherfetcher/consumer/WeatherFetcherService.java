@@ -1,13 +1,17 @@
 package com.example.WeatherForecastingApp.weatherfetcher.consumer;
 
 import com.example.WeatherForecastingApp.apigateway.dto.UserWeatherRequestDto;
+import com.example.WeatherForecastingApp.common.EventStoreUtils;
 import com.example.WeatherForecastingApp.common.RedisCacheService;
+import com.example.WeatherForecastingApp.common.dto.EventRequest;
 import com.example.WeatherForecastingApp.weatherfetcher.command.WeatherApiCommand;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -16,7 +20,8 @@ import java.util.List;
 import java.util.Map;
 
 @Service
-public class WeatherFetcherService {
+public class
+WeatherFetcherService {
 
     @Autowired
     private RedisCacheService redisCacheService;
@@ -28,10 +33,13 @@ public class WeatherFetcherService {
 
     private final List<WeatherApiCommand> weatherCommands;
 
+    @Autowired
+    private final EventStoreUtils eventStoreUtils;
 
     @Autowired
-    public WeatherFetcherService(List<WeatherApiCommand> weatherCommands) {
+    public WeatherFetcherService(List<WeatherApiCommand> weatherCommands, EventStoreUtils eventStoreUtils) {
         this.weatherCommands = weatherCommands;
+        this.eventStoreUtils = eventStoreUtils;
     }
 
     @KafkaListener(topics = "user-weather-request", groupId = "weather-fetcher-group")
@@ -41,7 +49,8 @@ public class WeatherFetcherService {
             String username = userWeatherRequestDto.getUsername();
             String location = userWeatherRequestDto.getLocation();
 
-            //redisCacheService.clearAllCache();
+            String eventData = objectMapper.writeValueAsString(userWeatherRequestDto);
+            eventStoreUtils.writeEventToEventStore("user-weather-requests", "UserWeatherRequest", eventData);
 
             Map<String, Map<LocalDateTime, Integer>> cachedHourlyData = redisCacheService.getCachedHourlyData(location);
             Map<LocalDate, Map<String, Integer>> cachedDailyData = redisCacheService.getCachedDailyData(location);
@@ -87,6 +96,5 @@ public class WeatherFetcherService {
             e.printStackTrace();
         }
     }
-
 
 }
