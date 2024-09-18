@@ -1,7 +1,10 @@
 package com.example.WeatherForecastingApp.weatherpresenter.consumer;
 
+import com.example.WeatherForecastingApp.common.EventStoreUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.Access;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.kafka.annotation.KafkaListener;
 
@@ -17,11 +20,18 @@ public class WeatherPresenterService {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final Map<String, Map<String, Map<LocalDateTime, Map<String, Integer>>>>  hourlyDataStore = new HashMap<>();
     private final Map<String, Map<String, Map<LocalDate, Map<String, Integer>>>> dailyDataStore = new TreeMap<>();
+    @Autowired
+    private final EventStoreUtils eventStoreUtils;
 
+    public WeatherPresenterService(EventStoreUtils eventStoreUtils) {
+        this.eventStoreUtils = eventStoreUtils;
+    }
 
     @KafkaListener(topics = "hourly-weather-data", groupId = "weather-presenter-group")
     public void receiveHourlyData(String messageJson) {
         try {
+
+            eventStoreUtils.writeEventToEventStore("hourly-data-processed", "HourlyDataProcessed", messageJson);
             Map<String, Object> message = objectMapper.readValue(messageJson, new TypeReference<>() {});
 
             String currentUser = (String) message.get("username");
@@ -50,6 +60,9 @@ public class WeatherPresenterService {
     @KafkaListener(topics = "daily-weather-data", groupId = "weather-presenter-group")
     public void receiveDailyData(String messageJson) {
         try {
+
+            eventStoreUtils.writeEventToEventStore("daily-data-processed", "DailyDataProcessed", messageJson);
+
             Map<String, Object> message = objectMapper.readValue(messageJson, new TypeReference<>() {
             });
             String currentUser = (String) message.get("username");

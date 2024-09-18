@@ -1,5 +1,6 @@
 package com.example.WeatherForecastingApp.weatherprocessor;
 
+import com.example.WeatherForecastingApp.common.EventStoreUtils;
 import com.example.WeatherForecastingApp.weatherprocessor.model.CombinedDailyForecast;
 import com.example.WeatherForecastingApp.weatherprocessor.model.CombinedHourlyForecast;
 import com.example.WeatherForecastingApp.weatherprocessor.model.HourlyForecast;
@@ -28,18 +29,23 @@ public class WeatherDataAggregator {
     private final Map<LocalDate, CombinedDailyForecast> combinedDailyForecasts;
 
     private final WeatherProcessorManager weatherProcessorManager;
+
     private final Set<String> processedApis;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Autowired
-    public WeatherDataAggregator(List<WeatherDataParser> parserList, WeatherProcessorManager weatherProcessorManager) {
-        System.out.println("INSIDE CONSTRUCTOR");
+    private final EventStoreUtils eventStoreUtils;
+
+    @Autowired
+    public WeatherDataAggregator(List<WeatherDataParser> parserList, WeatherProcessorManager weatherProcessorManager, EventStoreUtils eventStoreUtils) {
+        this.eventStoreUtils = eventStoreUtils;
         this.parsers = new HashMap<>();
         this.combinedHourlyForecasts = new TreeMap<>();
         this.combinedDailyForecasts = new TreeMap<>();
         this.weatherProcessorManager = weatherProcessorManager;
         this.processedApis = new HashSet<>();
-
+        System.out.println("INSIDE CONSTRUCTOR");
         for (WeatherDataParser parser : parserList) {
             if (parser instanceof OpenMeteoParser) {
                 parsers.put("weather-api1-data", parser);
@@ -57,33 +63,42 @@ public class WeatherDataAggregator {
 
     @KafkaListener(topics = "weather-api1-data", groupId = "weather-processor-group")
     public void receiveOpenMeteoData(String messageJson) {
+        System.out.println("INSIDE FETCHED LISTENER: " + messageJson);
+        eventStoreUtils.writeEventToEventStore("weather-fetched-data", "FetchedWeatherData", messageJson);
         processWeatherData("weather-api1-data", messageJson);
     }
 
     @KafkaListener(topics = "weather-api2-data")
     public void receiveTomorrowIoData(String messageJson) {
+
+        eventStoreUtils.writeEventToEventStore("weather-fetched-data", "FetchedWeatherData", messageJson);
         processWeatherData("weather-api2-data", messageJson);
     }
 
     @KafkaListener(topics = "weather-api3-data")
     public void receiveWeatherApiData(String messageJson) {
+
+        eventStoreUtils.writeEventToEventStore("weather-fetched-data", "FetchedWeatherData", messageJson);
         processWeatherData("weather-api3-data", messageJson);
     }
 
     @KafkaListener(topics = "weather-api4-data")
     public void receiveVissualCrossingData(String messageJson) {
+        eventStoreUtils.writeEventToEventStore("weather-fetched-data", "FetchedWeatherData", messageJson);
         processWeatherData("weather-api4-data", messageJson);
     }
 
     @KafkaListener(topics = "weather-api5-data")
     public void receiveAccuWeatherData(String messageJson) {
+        eventStoreUtils.writeEventToEventStore("weather-fetched-data", "FetchedWeatherData", messageJson);
         processWeatherData("weather-api5-data", messageJson);
     }
 
     private void processWeatherData(String topic, String messageJson) {
         try {
             System.out.println("Processing weather data for topic: " + topic);
-            Map<String, Object> message = objectMapper.readValue(messageJson, new TypeReference<Map<String, Object>>() {});
+            Map<String, Object> message = objectMapper.readValue(messageJson, new TypeReference<Map<String, Object>>() {
+            });
             String username = (String) message.get("username");
             String location = (String) message.get("location");
             String jsonData = (String) message.get("weatherData");

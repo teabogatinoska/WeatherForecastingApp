@@ -1,4 +1,4 @@
-package com.example.WeatherForecastingApp.weatherprocessor;
+package com.example.WeatherForecastingApp.eventstore;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -8,13 +8,15 @@ import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.web.client.RestTemplate;
 
-@SpringBootApplication(scanBasePackages = { "com.example.WeatherForecastingApp.weatherprocessor",
-        "com.example.WeatherForecastingApp.common"},exclude = {DataSourceAutoConfiguration.class})
+@SpringBootApplication(scanBasePackages = {
+        "com.example.WeatherForecastingApp.common",
+        "com.example.WeatherForecastingApp.eventstore"
+}, exclude = {DataSourceAutoConfiguration.class})
 @EnableDiscoveryClient
-public class WeatherProcessorApplication {
+public class EventStoreApplication {
     public static void main(String[] args) {
-        System.setProperty("spring.config.name", "weather-processor");
-        SpringApplication.run(WeatherProcessorApplication.class, args);
+        System.setProperty("spring.config.name", "event-store");
+        SpringApplication.run(EventStoreApplication.class, args);
     }
 
     @Bean
