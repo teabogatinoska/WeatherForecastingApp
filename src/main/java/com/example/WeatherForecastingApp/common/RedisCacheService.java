@@ -9,6 +9,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -73,10 +74,83 @@ public class RedisCacheService {
         return null;
     }
 
+    public void cacheWeatherAlerts(Long userId, Map<String, Object> alertsData) {
+        try {
+            String cacheKey = "user_" + userId + "_alerts";
+            String dataJson = objectMapper.writeValueAsString(alertsData);
+            redisTemplate.opsForValue().set(cacheKey, dataJson, CACHE_TTL, TimeUnit.HOURS);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public Map<String, Object> getCachedWeatherAlerts(Long userId) {
+        try {
+            String cacheKey = "user_" + userId + "_alerts";
+            String dataJson = redisTemplate.opsForValue().get(cacheKey);
+            if (dataJson != null) {
+                return objectMapper.readValue(dataJson, new TypeReference<Map<String, Object>>() {
+                });
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public void cacheUserHourlyData(String key, Map<String, Map<String, Integer>> hourlyData) {
+        try {
+            String dataJson = objectMapper.writeValueAsString(hourlyData);
+            System.out.println("Cached hourly data for user: " + key);
+            redisTemplate.opsForValue().set(key, dataJson, CACHE_TTL, TimeUnit.HOURS);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public Map<String, Map<String, Integer>> getCachedUserHourlyData(String key) {
+        try {
+            String dataJson = redisTemplate.opsForValue().get(key);
+            if (dataJson != null) {
+                System.out.println("Returning cached hourly data for user: " + key);
+                return objectMapper.readValue(dataJson, new TypeReference<Map<String, Map<String, Integer>>>() {
+                });
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public void cacheUserDailyData(String key, Map<LocalDate, Map<String, Integer>> dailyData) {
+        try {
+            String dataJson = objectMapper.writeValueAsString(dailyData);
+            System.out.println("Cached daily data for user: " + key);
+            redisTemplate.opsForValue().set(key, dataJson, CACHE_TTL, TimeUnit.HOURS);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public Map<LocalDate, Map<String, Integer>> getCachedUserDailyData(String key) {
+        try {
+            String dataJson = redisTemplate.opsForValue().get(key);
+            if (dataJson != null) {
+                System.out.println("Returning cached daily data for user: " + key);
+                return objectMapper.readValue(dataJson, new TypeReference<Map<LocalDate, Map<String, Integer>>>() {
+                });
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
 
     public void clearCache(String key) {
         redisTemplate.delete(key);
     }
+
     public void clearAllCache() {
         redisTemplate.getConnectionFactory().getConnection().flushDb();
     }

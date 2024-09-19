@@ -4,6 +4,7 @@ import com.example.WeatherForecastingApp.common.dto.EventRequest;
 import com.example.WeatherForecastingApp.eventstore.model.Event;
 import com.example.WeatherForecastingApp.eventstore.service.EventStoreService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -40,7 +41,7 @@ public class EventStoreController {
                 .thenApply(resolvedEvent -> {
 
                     Event event = new Event(
-                           resolvedEvent.getOriginalEvent().getEventId().toString(),
+                            resolvedEvent.getOriginalEvent().getEventId().toString(),
                             resolvedEvent.getOriginalEvent().getEventType(),
                             new String(resolvedEvent.getOriginalEvent().getEventData(), StandardCharsets.UTF_8)
                     );
@@ -51,5 +52,7 @@ public class EventStoreController {
                     return ResponseEntity.status(500).body(null);
                 });
     }
+
+
 
 }

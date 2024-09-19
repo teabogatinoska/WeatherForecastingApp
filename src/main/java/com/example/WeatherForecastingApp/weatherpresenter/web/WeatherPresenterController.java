@@ -42,4 +42,15 @@ public class WeatherPresenterController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
         }
     }
+
+    @GetMapping("/alerts")
+    public ResponseEntity<Map<String, Object>> getWeatherAlerts(@RequestParam Long userId) {
+        try {
+            Map<String, Object> data = weatherPresenterService.getWeatherAlerts(userId);
+            return ResponseEntity.ok(data);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
+        }
+    }
+
 }
