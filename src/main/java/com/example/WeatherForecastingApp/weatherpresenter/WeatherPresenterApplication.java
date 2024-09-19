@@ -17,7 +17,7 @@ public class WeatherPresenterApplication {
         SpringApplication.run(WeatherPresenterApplication.class, args);
     }
     @Bean
-    @LoadBalanced
+    //@LoadBalanced
     public RestTemplate restTemplate() {
         return new RestTemplate();
     }

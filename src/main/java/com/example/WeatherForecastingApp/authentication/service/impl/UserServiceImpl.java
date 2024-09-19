@@ -1,15 +1,19 @@
 package com.example.WeatherForecastingApp.authentication.service.impl;
 
+import com.example.WeatherForecastingApp.authentication.exception.LocationAlreadyFavoriteException;
+import com.example.WeatherForecastingApp.common.dto.LocationDto;
+import com.example.WeatherForecastingApp.common.dto.UserFavoriteLocationEvent;
 import com.example.WeatherForecastingApp.authentication.model.Location;
 import com.example.WeatherForecastingApp.authentication.model.User;
 import com.example.WeatherForecastingApp.authentication.repository.LocationRepository;
 import com.example.WeatherForecastingApp.authentication.repository.UserRepository;
 import com.example.WeatherForecastingApp.authentication.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -19,6 +23,9 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private LocationRepository locationRepository;
 
+    @Autowired
+    private KafkaTemplate<String, UserFavoriteLocationEvent> kafkaTemplate;
+
     public UserServiceImpl(UserRepository userRepository, LocationRepository locationRepository) {
         this.userRepository = userRepository;
         this.locationRepository = locationRepository;
@@ -26,14 +33,37 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User addFavoriteLocation(Long userId, String location, String country, double latitude, double longitude) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
-        Location favouriteLocation = locationRepository.findByNameAndCountry(location, country)
+        Location favoriteLocation = locationRepository.findByNameAndCountry(location, country)
                 .orElseGet(() -> locationRepository.save(new Location(location, latitude, longitude, country)));
 
-        user.addFavoriteCity(favouriteLocation);
-        return userRepository.save(user);
+        if (user.getFavoriteCities() == null) {
+            user.setFavoriteCities(new HashSet<>());
+        }
+
+        if (!user.getFavoriteCities().contains(favoriteLocation)) {
+            user.addFavoriteCity(favoriteLocation);
+            User updatedUser = userRepository.save(user);
+
+            List<LocationDto> locationDtos = updatedUser.getFavoriteCities().stream()
+                    .map(loc -> new LocationDto(loc.getName(), loc.getLatitude(), loc.getLongitude(), loc.getCountry()))
+                    .collect(Collectors.toList());
+
+            UserFavoriteLocationEvent event = new UserFavoriteLocationEvent();
+            event.setUserId(userId);
+            event.setLocations(locationDtos);
+
+            kafkaTemplate.send("user-favorite-locations-updated", event);
+
+            return updatedUser;
+        } else {
+            throw new LocationAlreadyFavoriteException("Location is already marked as favorite.");
+
+        }
     }
+
 
     @Override
     public User removeFavoriteLocation(Long userId, Long locationId) {
@@ -65,5 +95,22 @@ public class UserServiceImpl implements UserService {
     public List<Location> getRecentSearches(Long userId) {
         User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
         return user.getRecentSearches();
+    }
+
+    @Override
+    public Map<Long, List<Location>> getAllUsersFavoriteLocations() {
+        List<Object[]> usersWithLocations = userRepository.findAllUsersWithFavoriteLocations();
+
+        Map<Long, List<Location>> userFavoritesMap = new HashMap<>();
+
+        for (Object[] result : usersWithLocations) {
+            Long userId = (Long) result[0];
+            Location location = (Location) result[1];
+
+            userFavoritesMap.putIfAbsent(userId, new ArrayList<>());
+            userFavoritesMap.get(userId).add(location);
+        }
+
+        return userFavoritesMap;
     }
 }

@@ -1,4 +1,4 @@
-package com.example.WeatherForecastingApp.authentication.controller;
+package com.example.WeatherForecastingApp.authentication.web;
 
 import com.example.WeatherForecastingApp.authentication.model.ERole;
 import com.example.WeatherForecastingApp.authentication.model.Role;

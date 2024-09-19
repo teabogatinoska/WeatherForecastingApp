@@ -4,6 +4,7 @@ import com.example.WeatherForecastingApp.authentication.model.Location;
 import com.example.WeatherForecastingApp.authentication.model.User;
 
 import java.util.List;
+import java.util.Map;
 
 public interface UserService {
 
@@ -12,4 +13,6 @@ public interface UserService {
     User addRecentSearch(Long userId, String location, String country, double latitude, double longitude);
     List<Location> getFavoriteLocations(Long userId);
     List<Location> getRecentSearches(Long userId);
+
+    Map<Long, List<Location>> getAllUsersFavoriteLocations();
 }
