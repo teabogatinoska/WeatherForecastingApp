@@ -123,8 +123,8 @@ public class WeatherAlertService implements ApplicationRunner {
     }
 
 
-    //@Scheduled(fixedRate = 60000, initialDelay = 18000)
-    @Scheduled(cron = "0 0 8,20 * * *")
+    @Scheduled(fixedRate = 60000, initialDelay = 18000)
+    //@Scheduled(cron = "0 0 8,20 * * *")
     public void fetchWeatherAlerts() {
         System.out.println("Fetching Alerts");
 

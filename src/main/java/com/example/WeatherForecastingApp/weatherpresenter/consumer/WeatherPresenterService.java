@@ -1,7 +1,7 @@
 package com.example.WeatherForecastingApp.weatherpresenter.consumer;
 
 import com.example.WeatherForecastingApp.common.EventStoreUtils;
-import com.example.WeatherForecastingApp.common.dto.LocationDto;
+import com.example.WeatherForecastingApp.common.RedisCacheService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,9 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.kafka.annotation.KafkaListener;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -19,12 +17,12 @@ import java.util.TreeMap;
 public class WeatherPresenterService {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
-    private final Map<String, Map<String, Map<LocalDateTime, Map<String, Integer>>>>  hourlyDataStore = new HashMap<>();
-    private final Map<String, Map<String, Map<LocalDate, Map<String, Integer>>>> dailyDataStore = new TreeMap<>();
-    private final Map<Long, Map<String, List<String>>> alertsDataStore = new HashMap<>();
 
     @Autowired
     private final EventStoreUtils eventStoreUtils;
+
+    @Autowired
+    private RedisCacheService redisCacheService;
 
     public WeatherPresenterService(EventStoreUtils eventStoreUtils) {
         this.eventStoreUtils = eventStoreUtils;
@@ -35,26 +33,15 @@ public class WeatherPresenterService {
         try {
 
             eventStoreUtils.writeEventToEventStore("hourly-data-processed", "HourlyDataProcessed", messageJson);
-            Map<String, Object> message = objectMapper.readValue(messageJson, new TypeReference<>() {});
+            Map<String, Object> message = objectMapper.readValue(messageJson, new TypeReference<>() {
+            });
 
             String currentUser = (String) message.get("username");
             String location = (String) message.get("location");
             Map<String, Map<String, Integer>> hourlyResults = (Map<String, Map<String, Integer>>) message.get("hourlyResults");
+            String cacheKey = currentUser + "_" + location + "_hourly";
+            redisCacheService.cacheUserHourlyData(cacheKey, hourlyResults);
 
-            hourlyDataStore.putIfAbsent(currentUser, new HashMap<>());
-            hourlyDataStore.get(currentUser).putIfAbsent(location, new TreeMap<>());
-
-            for (Map.Entry<String, Map<String, Integer>> entry : hourlyResults.entrySet()) {
-                String dataType = entry.getKey();
-                Map<LocalDateTime, Map<String, Integer>> hourlyResultsForLocation = hourlyDataStore.get(currentUser).get(location);
-
-                for (Map.Entry<String, Integer> timeEntry : entry.getValue().entrySet()) {
-                    LocalDateTime time = LocalDateTime.parse(timeEntry.getKey());
-                    hourlyResultsForLocation.putIfAbsent(time, new HashMap<>());
-
-                    hourlyResultsForLocation.get(time).put(dataType, timeEntry.getValue());
-                }
-            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -72,16 +59,17 @@ public class WeatherPresenterService {
             String location = (String) message.get("location");
 
             Map<String, Map<String, Integer>> dailyResults = (Map<String, Map<String, Integer>>) message.get("dailyResults");
-            dailyDataStore.putIfAbsent(currentUser, new HashMap<>());
-            dailyDataStore.get(currentUser).putIfAbsent(location, new TreeMap<>());
 
+            Map<LocalDate, Map<String, Integer>> reformattedData = new TreeMap<>();
             for (Map.Entry<String, Map<String, Integer>> dateEntry : dailyResults.entrySet()) {
                 LocalDate date = LocalDate.parse(dateEntry.getKey());
                 Map<String, Integer> dataMap = dateEntry.getValue();
-
-                dailyDataStore.get(currentUser).get(location).put(date, new TreeMap<>(dataMap));
-
+                reformattedData.put(date, new TreeMap<>(dataMap));
             }
+
+            String cacheKey = currentUser + "_" + location + "_daily";
+            redisCacheService.cacheUserDailyData(cacheKey, reformattedData);
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -92,7 +80,8 @@ public class WeatherPresenterService {
         try {
             eventStoreUtils.writeEventToEventStore("alert-data-received", "AlertDataReceived", messageJson);
 
-            Map<String, Object> message = objectMapper.readValue(messageJson, new TypeReference<>() {});
+            Map<String, Object> message = objectMapper.readValue(messageJson, new TypeReference<>() {
+            });
 
             Object userIdObject = message.get("userId");
             Long userId;
@@ -104,29 +93,22 @@ public class WeatherPresenterService {
             } else {
                 throw new IllegalArgumentException("Invalid userId type");
             }
+            redisCacheService.cacheWeatherAlerts(userId, message);
 
-            Map<String, Object> locationMap = (Map<String, Object>) message.get("location");
-            LocationDto locationDto = objectMapper.convertValue(locationMap, LocationDto.class);
-
-            List<String> alerts = (List<String>) message.get("alerts");
-
-            alertsDataStore.putIfAbsent(userId, new HashMap<>());
-
-            alertsDataStore.get(userId).put(locationDto.getName(), alerts);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
 
-
     public Map<String, Object> getHourlyData(String username, String location) {
         Map<String, Object> result = new HashMap<>();
+        Map<String, Map<String, Integer>> hourlyData = redisCacheService.getCachedUserHourlyData(username + "_" + location);
 
-        if (hourlyDataStore.containsKey(username) && hourlyDataStore.get(username).containsKey(location)) {
+        if (hourlyData != null) {
             result.put("username", username);
             result.put("location", location);
-            result.put("hourlyData", new TreeMap<>(hourlyDataStore.get(username).get(location)));
+            result.put("hourlyData", new TreeMap<>(hourlyData));
         } else {
             throw new IllegalArgumentException("No matching hourly data found for the provided username and location.");
         }
@@ -136,11 +118,13 @@ public class WeatherPresenterService {
 
     public Map<String, Object> getDailyData(String username, String location) {
         Map<String, Object> result = new HashMap<>();
+        String cacheKey = username + "_" + location + "_daily";
+        Map<LocalDate, Map<String, Integer>> cachedDailyData = redisCacheService.getCachedUserDailyData(cacheKey);
 
-        if (dailyDataStore.containsKey(username) && dailyDataStore.get(username).containsKey(location)) {
+        if (cachedDailyData != null) {
             result.put("username", username);
             result.put("location", location);
-            result.put("dailyData", new TreeMap<>(dailyDataStore.get(username).get(location)));
+            result.put("dailyData", new TreeMap<>(cachedDailyData));
         } else {
             throw new IllegalArgumentException("No matching daily data found for the provided username and location.");
         }
@@ -149,25 +133,16 @@ public class WeatherPresenterService {
     }
 
     public Map<String, Object> getWeatherAlerts(Long userId) {
-        Map<String, Object> result = new HashMap<>();
-        System.out.println("Current alertsDataStore: " + alertsDataStore);
 
+        Map<String, Object> cachedAlerts = redisCacheService.getCachedWeatherAlerts(userId);
 
-        if (alertsDataStore.containsKey(userId)) {
-            result.put("user", userId);
-
-            Map<String, List<String>> userAlerts = alertsDataStore.get(userId);
-            result.put("alerts", userAlerts);
-
-            System.out.println("Found alerts for user: " + userId + " - Alerts: " + userAlerts);
-
+        if (cachedAlerts != null) {
+            System.out.println("Returning cached alerts for user: " + userId);
+            return cachedAlerts;
         } else {
-            System.out.println("No alerts found for user: " + userId);
-            throw new IllegalArgumentException("No weather alerts found for the provided username.");
+            System.out.println("No alerts found in cache for user: " + userId);
+            throw new IllegalArgumentException("No weather alerts found for the provided user ID.");
         }
-
-        return result;
     }
-
 
 }
