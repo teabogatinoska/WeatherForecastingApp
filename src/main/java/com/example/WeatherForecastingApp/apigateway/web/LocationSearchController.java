@@ -57,4 +57,21 @@ public class LocationSearchController {
             ));
         }
     }
+
+    @DeleteMapping("/{userId}/favorite/{locationId}")
+    public ResponseEntity<?> removeFavoriteLocation(@PathVariable Long userId, @PathVariable Long locationId) {
+        try {
+            locationSearchService.removeFavoriteLocation(userId, locationId);
+            return ResponseEntity.status(HttpStatus.OK).body(Map.of(
+                    "message", "Favorite location removed successfully",
+                    "userId", userId,
+                    "locationId", locationId
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "error", "An unexpected error occurred"
+            ));
+        }
+    }
+
 }

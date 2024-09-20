@@ -8,6 +8,9 @@ import org.springframework.data.redis.core.RedisTemplate;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -81,6 +84,8 @@ public class RedisCacheService {
             e.printStackTrace();
         }
     }
+
+
 
     public Map<String, Object> getCachedWeatherAlerts(Long userId) {
         try {

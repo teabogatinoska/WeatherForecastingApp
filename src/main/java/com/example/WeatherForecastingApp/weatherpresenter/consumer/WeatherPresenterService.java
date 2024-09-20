@@ -85,21 +85,14 @@ public class WeatherPresenterService {
     @KafkaListener(topics = "user-weather-alerts", groupId = "weather-presenter-group")
     public void receiveWeatherAlerts(String messageJson) {
         try {
-            eventStoreUtils.writeEventToEventStore("alert-data-received", "AlertDataReceived", messageJson);
 
-            Map<String, Object> message = objectMapper.readValue(messageJson, new TypeReference<>() {
+            Map<String, Object> message = objectMapper.readValue(messageJson, new TypeReference<Map<String, Object>>() {
             });
 
-            Object userIdObject = message.get("userId");
-            Long userId;
+            Long userId = ((Number) message.get("userId")).longValue();
 
-            if (userIdObject instanceof Integer) {
-                userId = ((Integer) userIdObject).longValue();
-            } else if (userIdObject instanceof Long) {
-                userId = (Long) userIdObject;
-            } else {
-                throw new IllegalArgumentException("Invalid userId type");
-            }
+            System.out.println("Received alerts for user: " + userId);
+
             redisCacheService.cacheWeatherAlerts(userId, message);
 
         } catch (Exception e) {

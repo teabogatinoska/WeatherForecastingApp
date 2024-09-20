@@ -59,5 +59,15 @@ public class LocationSearchService {
         return response.getBody();
     }
 
+    public void removeFavoriteLocation(Long userId, Long locationId) {
+        String url = authServiceUrl + "/user/" + userId + "/favorite/" + locationId;
+        System.out.println("Url DELETE: " + url);
+        restTemplate.exchange(
+                url,
+                HttpMethod.DELETE,
+                null,
+                Void.class
+        );
+    }
 
 }

@@ -3,6 +3,7 @@ package com.example.WeatherForecastingApp.weatheralert.service;
 import com.example.WeatherForecastingApp.common.EventStoreUtils;
 import com.example.WeatherForecastingApp.common.dto.UserFavoriteLocationEvent;
 import com.example.WeatherForecastingApp.weatheralert.model.Location;
+import com.example.WeatherForecastingApp.weatheralert.model.LocationAlerts;
 import com.example.WeatherForecastingApp.weatheralert.model.WeatherAlert;
 import com.example.WeatherForecastingApp.weatheralert.model.WeatherAlertEvent;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -24,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -37,7 +39,7 @@ public class WeatherAlertService implements ApplicationRunner {
     private RestTemplate restTemplate;
 
     @Autowired
-    private KafkaTemplate<String, WeatherAlertEvent> kafkaTemplate;
+    private KafkaTemplate<String, Object> kafkaTemplate;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -112,11 +114,16 @@ public class WeatherAlertService implements ApplicationRunner {
             String eventJson = objectMapper.writeValueAsString(event);
             eventStoreUtils.writeEventToEventStore("user-favorite-location-updated", "UserFavoriteLocationUpdated", eventJson);
 
-            List<Location> locations = event.getLocations().stream()
+            List<Location> newLocations = event.getLocations().stream()
                     .map(dto -> new Location(dto.getName(), dto.getLatitude(), dto.getLongitude()))
                     .collect(Collectors.toList());
 
-            userFavoriteLocations.put(event.getUserId(), locations);
+
+            System.out.println("New Locations: " + newLocations);
+
+            userFavoriteLocations.put(event.getUserId(), newLocations);
+
+            fetchAndSendWeatherAlerts(event.getUserId(), newLocations);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -124,7 +131,7 @@ public class WeatherAlertService implements ApplicationRunner {
 
 
     @Scheduled(fixedRate = 60000, initialDelay = 18000)
-    //@Scheduled(cron = "0 0 8,20 * * *")
+   // @Scheduled(cron = "0 0 8,20 * * *")
     public void fetchWeatherAlerts() {
         System.out.println("Fetching Alerts");
 
@@ -149,6 +156,8 @@ public class WeatherAlertService implements ApplicationRunner {
 
 
     private void fetchAndSendWeatherAlerts(Long userId, List<Location> locations) {
+        List<Map<String, Object>> locationAlertsList = new ArrayList<>();
+
         locations.forEach(location -> {
             String apiUrl = String.format(weatherAlertsApiUrl, location.getName());
             String response = externalRestTemplate.getForObject(apiUrl, String.class);
@@ -156,24 +165,26 @@ public class WeatherAlertService implements ApplicationRunner {
             List<WeatherAlert> alerts = parseWeatherAlerts(response);
 
             if (!alerts.isEmpty()) {
-                System.out.println("Inside send alerts!");
-                WeatherAlertEvent alertEvent = new WeatherAlertEvent(userId, location, alerts);
-                kafkaTemplate.send("user-weather-alerts", alertEvent);
+                System.out.println("Adding alerts for location: " + location.getName());
+
+                Map<String, Object> locationAlertsMap = new HashMap<>();
+                locationAlertsMap.put("location", location);
+                locationAlertsMap.put("alerts", alerts);
+
+                locationAlertsList.add(locationAlertsMap);
             }
         });
+
+        if (!locationAlertsList.isEmpty()) {
+            Map<String, Object> alertEventMap = new HashMap<>();
+            alertEventMap.put("userId", userId);
+            alertEventMap.put("locationAlerts", locationAlertsList);
+
+            kafkaTemplate.send("user-weather-alerts", alertEventMap);
+        }
     }
 
-    /*@Scheduled(fixedRate = 300000)
-    public void refreshUserFavoriteLocations() {
-        userFavoriteLocations.forEach((userId, locations) -> {
-            List<Location> updatedLocations = fetchFavoriteLocations(userId);
-            if (updatedLocations != null && !updatedLocations.isEmpty()) {
-                userFavoriteLocations.put(userId, updatedLocations);
-            }
-        });
-    }
 
-     */
 
     private List<WeatherAlert> parseWeatherAlerts(String response) {
         List<WeatherAlert> weatherAlerts = new ArrayList<>();
