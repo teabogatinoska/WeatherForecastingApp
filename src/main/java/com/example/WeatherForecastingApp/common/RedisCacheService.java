@@ -1,6 +1,5 @@
 package com.example.WeatherForecastingApp.common;
 
-import com.example.WeatherForecastingApp.authentication.model.Location;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,7 +8,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -144,6 +142,66 @@ public class RedisCacheService {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public void cacheAirQualityData(String location, Map<LocalDateTime, Map<String, Double>> airQualityResults) {
+        try {
+            String airQualityResultsJson = objectMapper.writeValueAsString(airQualityResults);
+            System.out.println("Caching hourly air data for location: " + location);
+            String cacheKey = location + "_airQuality";
+            redisTemplate.opsForValue().set(cacheKey, airQualityResultsJson);
+        } catch (Exception e) {
+            System.out.println("Error caching air quality data: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    public Map<LocalDateTime, Map<String, Double>> getAirQualityData(String location) {
+        try {
+            String cacheKey = location + "_airQuality";
+            System.out.println("Cached hourly air data for location: " + location);
+            String airQualityResultsJson = (String) redisTemplate.opsForValue().get(cacheKey);
+
+            if (airQualityResultsJson != null) {
+                return objectMapper.readValue(airQualityResultsJson, new TypeReference<Map<LocalDateTime, Map<String, Double>>>() {
+                });
+            } else {
+                System.out.println("No air quality data found for location: " + location);
+            }
+        } catch (Exception e) {
+            System.out.println("Error retrieving air quality data from cache: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    public Map<LocalDateTime, Map<String, Double>> getCachedUserAirQualityData(String airQualityCacheKey) {
+        try {
+            String airQualityResultsJson = (String) redisTemplate.opsForValue().get(airQualityCacheKey);
+            System.out.println("Cached hourly air data for: " + airQualityCacheKey);
+            if (airQualityResultsJson != null) {
+
+                return objectMapper.readValue(airQualityResultsJson, new TypeReference<Map<LocalDateTime, Map<String, Double>>>() {
+                });
+            }
+        } catch (Exception e) {
+            System.out.println("Error retrieving air quality data from cache: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+
+    public void cacheUserAirQualityData(String airQualityCacheKey, Map<LocalDateTime, Map<String, Double>> airQualityResults) {
+        try {
+            String airQualityResultsJson = objectMapper.writeValueAsString(airQualityResults);
+            System.out.println("Caching hourly air data for: " + airQualityCacheKey);
+            redisTemplate.opsForValue().set(airQualityCacheKey, airQualityResultsJson);
+        } catch (Exception e) {
+            System.out.println("Error caching user air quality data: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
 

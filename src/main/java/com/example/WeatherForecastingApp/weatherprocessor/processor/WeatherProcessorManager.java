@@ -1,6 +1,7 @@
 package com.example.WeatherForecastingApp.weatherprocessor.processor;
 
 import com.example.WeatherForecastingApp.common.RedisCacheService;
+import com.example.WeatherForecastingApp.weatherprocessor.model.AirQualityData;
 import com.example.WeatherForecastingApp.weatherprocessor.model.CombinedDailyForecast;
 import com.example.WeatherForecastingApp.weatherprocessor.model.CombinedHourlyForecast;
 import com.example.WeatherForecastingApp.weatherprocessor.processor.impl.ForecastHumidityProcessor;
@@ -48,7 +49,7 @@ public class WeatherProcessorManager {
     }
 
     public void processAllData(Map<LocalDateTime, CombinedHourlyForecast> combinedHourlyForecasts,
-                               Map<LocalDate, CombinedDailyForecast> combinedDailyForecasts, String username, String location) {
+                               Map<LocalDate, CombinedDailyForecast> combinedDailyForecasts, Map<LocalDateTime, AirQualityData> airQualityDataMap, String username, String location) {
         List<String> dataTypes = Arrays.asList("temperature", "humidity", "precipitation", "windSpeed");
 
         Map<String, Object> hourlyMessage = new HashMap<>();
@@ -78,11 +79,21 @@ public class WeatherProcessorManager {
                 });
             }
         }
+        Map<LocalDateTime, Map<String, Double>> airQualityResults = new HashMap<>();
+        airQualityDataMap.forEach((timestamp, airQualityData) -> {
+            Map<String, Double> airQualityValues = new HashMap<>();
+            airQualityValues.put("pm10", airQualityData.getPm10());
+            airQualityValues.put("pm2_5", airQualityData.getPm25());
+            airQualityResults.put(timestamp, airQualityValues);
+        });
+
         hourlyMessage.put("hourlyResults", hourlyResultsMap);
+        hourlyMessage.put("airQualityResults", airQualityResults);
         dailyMessage.put("dailyResults", dailyResultsMap);
 
         redisCacheService.cacheHourlyData(location, hourlyResultsMap);
         redisCacheService.cacheDailyData(location, dailyResultsMap);
+        redisCacheService.cacheAirQualityData(location, airQualityResults);
 
         sendKafkaMessage("hourly-weather-data", hourlyMessage);
         sendKafkaMessage("daily-weather-data", dailyMessage);

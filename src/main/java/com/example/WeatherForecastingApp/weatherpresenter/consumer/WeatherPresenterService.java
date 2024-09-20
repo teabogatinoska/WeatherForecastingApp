@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.kafka.annotation.KafkaListener;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
@@ -41,6 +42,12 @@ public class WeatherPresenterService {
             Map<String, Map<String, Integer>> hourlyResults = (Map<String, Map<String, Integer>>) message.get("hourlyResults");
             String cacheKey = currentUser + "_" + location + "_hourly";
             redisCacheService.cacheUserHourlyData(cacheKey, hourlyResults);
+
+            Map<LocalDateTime, Map<String, Double>> airQualityResults = (Map<LocalDateTime, Map<String, Double>>) message.get("airQualityResults");
+
+            String airQualityCacheKey = currentUser + "_" + location + "_airQuality";
+            redisCacheService.cacheUserAirQualityData(airQualityCacheKey, airQualityResults);
+
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -103,12 +110,17 @@ public class WeatherPresenterService {
 
     public Map<String, Object> getHourlyData(String username, String location) {
         Map<String, Object> result = new HashMap<>();
-        Map<String, Map<String, Integer>> hourlyData = redisCacheService.getCachedUserHourlyData(username + "_" + location);
+        Map<String, Map<String, Integer>> hourlyData = redisCacheService.getCachedUserHourlyData(username + "_" + location + "_hourly");
+        Map<LocalDateTime, Map<String, Double>> airQualityData = redisCacheService.getCachedUserAirQualityData(username + "_" + location + "_airQuality");
 
         if (hourlyData != null) {
             result.put("username", username);
             result.put("location", location);
             result.put("hourlyData", new TreeMap<>(hourlyData));
+
+            if (airQualityData != null) {
+                result.put("airQualityData", new TreeMap<>(airQualityData));
+            }
         } else {
             throw new IllegalArgumentException("No matching hourly data found for the provided username and location.");
         }
