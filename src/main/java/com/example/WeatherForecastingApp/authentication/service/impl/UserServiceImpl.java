@@ -32,12 +32,12 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User addFavoriteLocation(Long userId, String location, String country, double latitude, double longitude) {
+    public User addFavoriteLocation(Long userId, String location, String country) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         Location favoriteLocation = locationRepository.findByNameAndCountry(location, country)
-                .orElseGet(() -> locationRepository.save(new Location(location, latitude, longitude, country)));
+                .orElseGet(() -> locationRepository.save(new Location(location, country)));
 
         if (user.getFavoriteCities() == null) {
             user.setFavoriteCities(new HashSet<>());
@@ -48,7 +48,7 @@ public class UserServiceImpl implements UserService {
             User updatedUser = userRepository.save(user);
 
             List<LocationDto> locationDtos = updatedUser.getFavoriteCities().stream()
-                    .map(loc -> new LocationDto(loc.getName(), loc.getLatitude(), loc.getLongitude(), loc.getCountry()))
+                    .map(loc -> new LocationDto(loc.getName(), loc.getCountry()))
                     .collect(Collectors.toList());
 
             UserFavoriteLocationEvent event = new UserFavoriteLocationEvent();
@@ -71,15 +71,28 @@ public class UserServiceImpl implements UserService {
         Location location = locationRepository.findById(locationId).orElseThrow(() -> new RuntimeException("Location not found"));
 
         user.removeFavoriteCity(location);
-        return userRepository.save(user);
+        User updatedUser = userRepository.save(user);
+
+        List<LocationDto> locationDtos = updatedUser.getFavoriteCities().stream()
+                .map(loc -> new LocationDto(loc.getName(), loc.getCountry()))
+                .collect(Collectors.toList());
+
+        UserFavoriteLocationEvent event = new UserFavoriteLocationEvent();
+        event.setUserId(userId);
+        event.setLocations(locationDtos);
+
+        kafkaTemplate.send("user-favorite-locations-deleted", event);
+
+        return updatedUser;
     }
 
     @Override
-    public User addRecentSearch(Long userId, String location, String country, double latitude, double longitude) {
+    public User addRecentSearch(Long userId, String location, String country) {
         User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
 
         Location recentLocation = locationRepository.findByNameAndCountry(location, country)
-                .orElseGet(() -> locationRepository.save(new Location(location, latitude, longitude, country)));
+                .orElseGet(() -> locationRepository.save(new Location(location, country)));
+
 
         user.addRecentSearch(recentLocation);
         return userRepository.save(user);

@@ -21,19 +21,25 @@ public class Location {
     @Size(max = 20)
     private String name;
 
-    private double latitude;
-    private double longitude;
-
+    @NotBlank
+    @Size(max = 20)
     private String country;
 
-    public Location(String name, double latitude, double longitude, String country) {
+    public Location(String name, String country) {
         this.name = name;
-        this.latitude = latitude;
-        this.longitude = longitude;
         this.country = country;
     }
 
     public Location() {
 
+    }
+
+    @Override
+    public String toString() {
+        return "Location{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", country='" + country + '\'' +
+                '}';
     }
 }

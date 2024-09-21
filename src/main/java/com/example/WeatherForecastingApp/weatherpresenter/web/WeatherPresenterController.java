@@ -47,7 +47,12 @@ public class WeatherPresenterController {
     public ResponseEntity<Map<String, Object>> getWeatherAlerts(@RequestParam Long userId) {
         try {
             Map<String, Object> data = weatherPresenterService.getWeatherAlerts(userId);
-            return ResponseEntity.ok(data);
+            if (data != null) {
+                return ResponseEntity.ok(data);
+            } else {
+                return ResponseEntity.status(HttpStatus.OK).body(Map.of("message", "No weather alerts available for this user."));
+
+            }
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
         }

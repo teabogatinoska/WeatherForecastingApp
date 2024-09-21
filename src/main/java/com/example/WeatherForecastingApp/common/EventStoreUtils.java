@@ -2,6 +2,8 @@ package com.example.WeatherForecastingApp.common;
 
 import com.example.WeatherForecastingApp.common.dto.EventRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
@@ -11,9 +13,11 @@ import org.springframework.web.client.RestTemplate;
 @Component
 public class EventStoreUtils {
 
+    @Autowired
+    @LoadBalanced
     private final RestTemplate restTemplate;
-    private final String eventStoreServiceUrl = "http://localhost:8081";
-    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    private final String eventStoreServiceUrl = "http://event-store";
 
     public EventStoreUtils(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;

@@ -8,9 +8,9 @@ import java.util.Map;
 
 public interface UserService {
 
-    User addFavoriteLocation(Long userId, String location, String country, double latitude, double longitude);
+    User addFavoriteLocation(Long userId, String location, String country);
     User removeFavoriteLocation(Long userId, Long locationId);
-    User addRecentSearch(Long userId, String location, String country, double latitude, double longitude);
+    User addRecentSearch(Long userId, String location, String country);
     List<Location> getFavoriteLocations(Long userId);
     List<Location> getRecentSearches(Long userId);
 

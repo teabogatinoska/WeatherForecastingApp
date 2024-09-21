@@ -26,7 +26,7 @@ public class LocationSearchService {
 
     public void updateRecentSearch(Long userId, LocationDto locationDto) {
         String url = authServiceUrl + "/user/" + userId + "/recent-search";
-        System.out.println("Url: " + url);
+        System.out.println("LocationDTO: " + locationDto.toString());
         restTemplate.postForObject(url, locationDto, Void.class);
     }
 

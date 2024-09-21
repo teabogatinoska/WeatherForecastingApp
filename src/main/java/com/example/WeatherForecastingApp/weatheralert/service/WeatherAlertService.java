@@ -105,6 +105,26 @@ public class WeatherAlertService implements ApplicationRunner {
         return response.getBody();
     }
 
+    @KafkaListener(topics = "user-favorite-locations-deleted", groupId = "weather-alert-group")
+    public void handleFavoriteLocationsDelete(UserFavoriteLocationEvent event) {
+        try {
+            System.out.println("New location added: " + event);
+
+            String eventJson = objectMapper.writeValueAsString(event);
+            eventStoreUtils.writeEventToEventStore("user-favorite-location-deleted", "UserFavoriteLocationDeleted", eventJson);
+
+            List<Location> newLocations = event.getLocations().stream()
+                    .map(dto -> new Location(dto.getName(), dto.getCountry()))
+                    .collect(Collectors.toList());
+
+            System.out.println("New locations updated: " + newLocations);
+            userFavoriteLocations.put(event.getUserId(), newLocations);
+
+            fetchAndSendWeatherAlerts(event.getUserId(), newLocations);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     @KafkaListener(topics = "user-favorite-locations-updated", groupId = "weather-alert-group")
     public void handleFavoriteLocationsUpdate(UserFavoriteLocationEvent event) {
@@ -115,12 +135,10 @@ public class WeatherAlertService implements ApplicationRunner {
             eventStoreUtils.writeEventToEventStore("user-favorite-location-updated", "UserFavoriteLocationUpdated", eventJson);
 
             List<Location> newLocations = event.getLocations().stream()
-                    .map(dto -> new Location(dto.getName(), dto.getLatitude(), dto.getLongitude()))
+                    .map(dto -> new Location(dto.getName(), dto.getCountry()))
                     .collect(Collectors.toList());
 
-
-            System.out.println("New Locations: " + newLocations);
-
+            System.out.println("New locations updated: " + newLocations);
             userFavoriteLocations.put(event.getUserId(), newLocations);
 
             fetchAndSendWeatherAlerts(event.getUserId(), newLocations);
@@ -130,8 +148,8 @@ public class WeatherAlertService implements ApplicationRunner {
     }
 
 
-    @Scheduled(fixedRate = 60000, initialDelay = 18000)
-   // @Scheduled(cron = "0 0 8,20 * * *")
+    // @Scheduled(fixedRate = 60000, initialDelay = 18000)
+    @Scheduled(cron = "0 0 8,20 * * *")
     public void fetchWeatherAlerts() {
         System.out.println("Fetching Alerts");
 
@@ -175,15 +193,13 @@ public class WeatherAlertService implements ApplicationRunner {
             }
         });
 
-        if (!locationAlertsList.isEmpty()) {
-            Map<String, Object> alertEventMap = new HashMap<>();
-            alertEventMap.put("userId", userId);
-            alertEventMap.put("locationAlerts", locationAlertsList);
+        Map<String, Object> alertEventMap = new HashMap<>();
+        alertEventMap.put("userId", userId);
+        alertEventMap.put("locationAlerts", locationAlertsList);
 
-            kafkaTemplate.send("user-weather-alerts", alertEventMap);
-        }
+        kafkaTemplate.send("user-weather-alerts", alertEventMap);
+
     }
-
 
 
     private List<WeatherAlert> parseWeatherAlerts(String response) {

@@ -23,8 +23,7 @@ public class UserController {
     @PostMapping("/{userId}/favorite-location")
     public ResponseEntity<?> addFavoriteLocation(@PathVariable Long userId, @RequestBody LocationDto locationDto) {
         try {
-            User user = userService.addFavoriteLocation(userId, locationDto.getName(), locationDto.getCountry(),
-                    locationDto.getLatitude(), locationDto.getLongitude());
+            User user = userService.addFavoriteLocation(userId, locationDto.getName(), locationDto.getCountry());
             return ResponseEntity.ok(user);
         } catch (LocationAlreadyFavoriteException ex) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", ex.getMessage()));
@@ -40,8 +39,7 @@ public class UserController {
 
     @PostMapping("/{userId}/recent-search")
     public ResponseEntity<User> updateRecentSearch(@PathVariable Long userId, @RequestBody LocationDto locationDto) {
-        User user = userService.addRecentSearch(userId, locationDto.getName(), locationDto.getCountry(),
-                locationDto.getLatitude(), locationDto.getLongitude());
+        User user = userService.addRecentSearch(userId, locationDto.getName(), locationDto.getCountry());
         return ResponseEntity.ok(user);
     }
 

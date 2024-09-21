@@ -22,16 +22,10 @@ public class WeatherRequestController {
     @PostMapping("/request")
     public String requestWeatherData(@RequestBody UserWeatherRequestDto requestDto) {
         kafkaTemplate.send(REQUEST_TOPIC, requestDto);
-
-        LocationDto locationDto = new LocationDto(requestDto.getLocation());
+        System.out.println(requestDto.toString());
+        LocationDto locationDto = new LocationDto(requestDto.getLocation(), requestDto.getCountry());
         locationSearchService.updateRecentSearch(requestDto.getUserId(), locationDto);
 
-        return "Weather request for " + requestDto.getLocation() + " by user " + requestDto.getUsername() + " has been received";
+        return "Weather request for " + requestDto.getLocation() + ", " + requestDto.getCountry() + " by user " + requestDto.getUsername() + " has been received";
     }
-
-    /*private String createEvent(UserWeatherRequestDto requestDto) {
-        return "{\"username\": \"" + requestDto.getUsername() + "\", \"location\": \"" + requestDto.getLocation() + "\"}";
-    }
-
-     */
 }

@@ -7,8 +7,6 @@ import lombok.Setter;
 @Setter
 public class LocationDto {
     private String name;
-    private double latitude;
-    private double longitude;
     private String country;
 
     public LocationDto() {}
@@ -17,10 +15,16 @@ public class LocationDto {
         this.name = name;
     }
 
-    public LocationDto(String name, double latitude, double longitude, String country) {
+    public LocationDto(String name, String country) {
         this.name = name;
-        this.latitude = latitude;
-        this.longitude = longitude;
         this.country = country;
+    }
+
+    @Override
+    public String toString() {
+        return "LocationDto{" +
+                "name='" + name + '\'' +
+                ", country='" + country + '\'' +
+                '}';
     }
 }

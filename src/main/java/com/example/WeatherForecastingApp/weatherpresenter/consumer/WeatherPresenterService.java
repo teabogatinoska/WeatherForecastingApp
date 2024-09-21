@@ -11,6 +11,7 @@ import org.springframework.kafka.annotation.KafkaListener;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -90,10 +91,13 @@ public class WeatherPresenterService {
             });
 
             Long userId = ((Number) message.get("userId")).longValue();
+            List<?> locationAlerts = (List<?>) message.get("locationAlerts");
 
             System.out.println("Received alerts for user: " + userId);
 
-            redisCacheService.cacheWeatherAlerts(userId, message);
+            if(locationAlerts != null) {
+                redisCacheService.cacheWeatherAlerts(userId, message);
+            }
 
         } catch (Exception e) {
             e.printStackTrace();
