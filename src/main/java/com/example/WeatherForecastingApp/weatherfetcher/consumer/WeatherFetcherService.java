@@ -55,8 +55,9 @@ WeatherFetcherService {
             Map<String, Map<LocalDateTime, Integer>> cachedHourlyData = redisCacheService.getCachedHourlyData(location);
             Map<LocalDate, Map<String, Integer>> cachedDailyData = redisCacheService.getCachedDailyData(location);
             Map<LocalDateTime, Map<String, Double>> cachedAirQualityData = redisCacheService.getAirQualityData(location);
+            Map<LocalDateTime, String> cachedDescriptionData = redisCacheService.getDescriptionData(location);
 
-            if (cachedHourlyData != null && cachedDailyData != null) {
+            if (cachedHourlyData != null && cachedDailyData != null && cachedDescriptionData != null) {
                 System.out.println("Cache hit: " + location);
 
                 Map<String, Object> hourlyMessage = new HashMap<>();
@@ -64,8 +65,9 @@ WeatherFetcherService {
                 hourlyMessage.put("location", location);
                 hourlyMessage.put("hourlyResults", cachedHourlyData);
                 hourlyMessage.put("airQualityResults", cachedAirQualityData);
+                hourlyMessage.put("weatherDescriptions", cachedDescriptionData);
 
-                System.out.println("airQualityResults Cached: " + cachedAirQualityData);
+                System.out.println("weatherDescriptions Cached: " + cachedDescriptionData);
 
                 Map<String, Object> dailyMessage = new HashMap<>();
                 dailyMessage.put("username", username);

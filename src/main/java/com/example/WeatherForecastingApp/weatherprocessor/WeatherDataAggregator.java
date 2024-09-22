@@ -36,9 +36,12 @@ public class WeatherDataAggregator {
 
     private final Map<LocalDateTime, AirQualityData> airQualityDataMap = new TreeMap<>();
 
-    private final int TOTAL_APIS = 6;
+    private final int TOTAL_APIS = 5;
     private int apiCallCount = 0;
     private int successfulApis = 0;
+    private Timer apiResponseTimer;
+    private boolean timerStarted = false;
+    private final long TIMEOUT_DURATION = 5000;
 
     @Autowired
     private final EventStoreUtils eventStoreUtils;
@@ -121,7 +124,13 @@ public class WeatherDataAggregator {
             String location = (String) message.get("location");
             String jsonData = (String) message.get("weatherData");
 
+            if (!timerStarted) {
+                startApiResponseTimer(username, location);
+                timerStarted = true;
+            }
+
             WeatherDataParser parser = parsers.get(topic);
+            System.out.println("TOPIC: " + topic);
             apiCallCount++;
             if (parser != null) {
                 WeatherData weatherData = parser.parse(jsonData);
@@ -129,23 +138,11 @@ public class WeatherDataAggregator {
                 successfulApis++;
 
                 if (apiCallCount == TOTAL_APIS) {
-
-                    if (successfulApis >= 5) {
-                        weatherProcessorManager.processAllData(combinedHourlyForecasts, combinedDailyForecasts, airQualityDataMap, username, location);
-
-                    } else if (successfulApis >= 2) {
-                        weatherProcessorManager.processAllData(combinedHourlyForecasts, combinedDailyForecasts, airQualityDataMap, username, location);
-
-                    } else {
-                        System.out.println("Not enough APIs returned valid data. Cannot proceed.");
-
-                    }
-                    apiCallCount = 0;
-                    successfulApis = 0;
+                    processAllData(username, location);
                 }
 
-                System.out.println("HOURLY: " + getCombinedHourlyForecasts().toString());
-                System.out.println("DAILY: " + getCombinedDailyForecasts().toString());
+                //System.out.println("HOURLY: " + getCombinedHourlyForecasts().toString());
+                //System.out.println("DAILY: " + getCombinedDailyForecasts().toString());
             } else {
                 System.out.println("No parser found for topic: " + topic);
             }
@@ -166,6 +163,9 @@ public class WeatherDataAggregator {
             combinedHourlyForecast.addHumidity(forecast.getHumidity());
             combinedHourlyForecast.addPrecipitationProbability(forecast.getPrecipitationProbability());
             combinedHourlyForecast.addWindSpeed(forecast.getWindSpeed());
+            System.out.println("Forecast description: " + forecast.getDescription());
+            combinedHourlyForecast.setDescription(forecast.getDescription());
+
 
             LocalDate date = timestamp.toLocalDate();
             combinedDailyForecasts.computeIfAbsent(date, k -> new CombinedDailyForecast())
@@ -173,20 +173,6 @@ public class WeatherDataAggregator {
         }
     }
 
-
-    public Map<LocalDate, CombinedDailyForecast> getCombinedDailyForecasts() {
-
-        Map<LocalDate, CombinedDailyForecast> result = new TreeMap<>();
-
-        for (Map.Entry<LocalDate, CombinedDailyForecast> entry : combinedDailyForecasts.entrySet()) {
-            LocalDate date = entry.getKey();
-            CombinedDailyForecast dailyForecast = entry.getValue();
-
-            result.put(date, dailyForecast);
-        }
-
-        return result;
-    }
 
     private void processAirQualityData(String airQualityData) {
         try {
@@ -211,6 +197,43 @@ public class WeatherDataAggregator {
             e.printStackTrace();
         }
     }
+
+    private void startApiResponseTimer(String username, String location) {
+        apiResponseTimer = new Timer();
+        apiResponseTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+               System.out.println("Timeout reached. Processing available data.");
+                processAllData(username, location);
+            }
+        }, TIMEOUT_DURATION);
+    }
+
+    private void processAllData(String username, String location) {
+        if (successfulApis >= 5) {
+            System.out.println("All 5 APIs responded successfully. Processing data.");
+        } else if (successfulApis >= 2) {
+            System.out.println("Only " + successfulApis + " APIs responded successfully. Proceeding with available data.");
+        } else {
+            System.out.println("Not enough APIs returned valid data. Cannot proceed.");
+
+            return;
+        }
+
+        weatherProcessorManager.processAllData(combinedHourlyForecasts, combinedDailyForecasts, airQualityDataMap, username, location);
+
+        resetApiState();
+    }
+
+    private void resetApiState() {
+        apiCallCount = 0;
+        successfulApis = 0;
+        timerStarted = false;
+        if (apiResponseTimer != null) {
+            apiResponseTimer.cancel();
+        }
+    }
+
 
 }
 

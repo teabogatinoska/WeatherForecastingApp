@@ -214,5 +214,66 @@ public class RedisCacheService {
     public void clearAllCache() {
         redisTemplate.getConnectionFactory().getConnection().flushDb();
     }
+
+    public void cacheDescriptionData(String location, Map<LocalDateTime, String> descriptionResultsMap) {
+        try {
+            String DescriptionResultsJson = objectMapper.writeValueAsString(descriptionResultsMap);
+            System.out.println("Caching hourly _description for location: " + location);
+            String cacheKey = location + "_description";
+            redisTemplate.opsForValue().set(cacheKey, DescriptionResultsJson);
+        } catch (Exception e) {
+            System.out.println("Error caching _description data: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    public Map<LocalDateTime, String> getDescriptionData(String location) {
+        try {
+            String cacheKey = location + "_description";
+            System.out.println("Cached hourly description for location: " + location);
+            String descriptionResultsJson = (String) redisTemplate.opsForValue().get(cacheKey);
+
+            if (descriptionResultsJson != null) {
+                return objectMapper.readValue(descriptionResultsJson, new TypeReference<Map<LocalDateTime, String>>() {
+                });
+            } else {
+                System.out.println("No description data found for location: " + location);
+            }
+        } catch (Exception e) {
+            System.out.println("Error retrieving description data from cache: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    public void cacheUserWeatherDescriptions(String descriptionCacheKey, Map<LocalDateTime, String> weatherDescriptions) {
+        try {
+            String descriptionResultsJson = objectMapper.writeValueAsString(weatherDescriptions);
+            System.out.println("Caching hourly desc for: " + descriptionCacheKey);
+            redisTemplate.opsForValue().set(descriptionCacheKey, descriptionResultsJson);
+        } catch (Exception e) {
+            System.out.println("Error caching user air quality data: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+
+    public Map<LocalDateTime, String> getCachedUserWeatherDescriptions(String descriptionKey) {
+        try {
+            String descriptionResultsJson = (String) redisTemplate.opsForValue().get(descriptionKey);
+            System.out.println("Cached hourly desc data for: " + descriptionKey);
+            if (descriptionResultsJson != null) {
+
+                return objectMapper.readValue(descriptionResultsJson, new TypeReference<Map<LocalDateTime, String>>() {
+                });
+            }
+        } catch (Exception e) {
+            System.out.println("Error retrieving desc data from cache: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+
 }
 

@@ -6,7 +6,6 @@ import lombok.Getter;
 import java.time.LocalDateTime;
 
 @Getter
-@AllArgsConstructor
 public class HourlyForecast {
 
     private LocalDateTime timestamp;
@@ -14,10 +13,24 @@ public class HourlyForecast {
     private double humidity;
     private double precipitationProbability;
     private double windSpeed;
+    private String description;
 
-    public HourlyForecast(LocalDateTime timestamp, double temperature) {
+    public HourlyForecast(LocalDateTime timestamp, double temperature, double humidity, double precipitationProbability, double windSpeed, String description) {
         this.timestamp = timestamp;
         this.temperature = temperature;
+        this.humidity = humidity;
+        this.precipitationProbability = precipitationProbability;
+        this.windSpeed = windSpeed;
+        this.description = description;
+    }
+
+    public HourlyForecast(LocalDateTime timestamp, double temperature, double humidity, double precipitationProbability, double windSpeed) {
+        this.timestamp = timestamp;
+        this.temperature = temperature;
+        this.humidity = humidity;
+        this.precipitationProbability = precipitationProbability;
+        this.windSpeed = windSpeed;
+        this.description = null;
     }
 
     @Override
@@ -28,6 +41,7 @@ public class HourlyForecast {
                 ", humidity=" + humidity +
                 ", precipitationProbability=" + precipitationProbability +
                 ", windSpeed=" + windSpeed +
+                ", description='" + description + '\'' +
                 '}';
     }
 }

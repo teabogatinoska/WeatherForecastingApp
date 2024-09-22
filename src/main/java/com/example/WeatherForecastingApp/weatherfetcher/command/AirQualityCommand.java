@@ -30,7 +30,7 @@ public class AirQualityCommand implements WeatherApiCommand  {
             if (coordinates != null) {
                 String apiUrl = String.format(WEATHER_API_URL, coordinates[0], coordinates[1]);
                 String weatherData = fetchWeatherDataFromAPI(apiUrl);
-
+                System.out.println("FETCHING AIQ QUALITY");
                 Map<String, Object> message = new HashMap<>();
                 message.put("username", requestDto.getUsername());
                 message.put("location", requestDto.getLocation());

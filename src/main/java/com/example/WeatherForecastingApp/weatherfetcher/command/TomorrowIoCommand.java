@@ -23,7 +23,6 @@ public class TomorrowIoCommand implements WeatherApiCommand{
             String location = requestDto.getLocation();
             String apiUrl = String.format(WEATHER_API_URL, location);
             String weatherData = fetchWeatherDataFromAPI(apiUrl);
-
             Map<String, Object> message = new HashMap<>();
             message.put("username", requestDto.getUsername());
             message.put("location", requestDto.getLocation());

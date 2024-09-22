@@ -33,7 +33,7 @@ public class WeatherPresenterService {
     @KafkaListener(topics = "hourly-weather-data", groupId = "weather-presenter-group")
     public void receiveHourlyData(String messageJson) {
         try {
-
+            System.out.println("INSIDE HOURLY DATA");
             eventStoreUtils.writeEventToEventStore("hourly-data-processed", "HourlyDataProcessed", messageJson);
             Map<String, Object> message = objectMapper.readValue(messageJson, new TypeReference<>() {
             });
@@ -43,6 +43,14 @@ public class WeatherPresenterService {
             Map<String, Map<String, Integer>> hourlyResults = (Map<String, Map<String, Integer>>) message.get("hourlyResults");
             String cacheKey = currentUser + "_" + location + "_hourly";
             redisCacheService.cacheUserHourlyData(cacheKey, hourlyResults);
+
+
+            Map<LocalDateTime, String> weatherDescriptions = (Map<LocalDateTime, String>) message.get("weatherDescriptions");
+            System.out.println("Weather desc: " + weatherDescriptions);
+            if (weatherDescriptions != null && !weatherDescriptions.isEmpty()) {
+                String descriptionCacheKey = currentUser + "_" + location + "_descriptions";
+                redisCacheService.cacheUserWeatherDescriptions(descriptionCacheKey, weatherDescriptions);
+            }
 
             Map<LocalDateTime, Map<String, Double>> airQualityResults = (Map<LocalDateTime, Map<String, Double>>) message.get("airQualityResults");
 
@@ -109,6 +117,8 @@ public class WeatherPresenterService {
         Map<String, Object> result = new HashMap<>();
         Map<String, Map<String, Integer>> hourlyData = redisCacheService.getCachedUserHourlyData(username + "_" + location + "_hourly");
         Map<LocalDateTime, Map<String, Double>> airQualityData = redisCacheService.getCachedUserAirQualityData(username + "_" + location + "_airQuality");
+        Map<LocalDateTime, String> weatherDescriptions = redisCacheService.getCachedUserWeatherDescriptions(username + "_" + location + "_descriptions");
+
 
         if (hourlyData != null) {
             result.put("username", username);
@@ -117,6 +127,10 @@ public class WeatherPresenterService {
 
             if (airQualityData != null) {
                 result.put("airQualityData", new TreeMap<>(airQualityData));
+            }
+
+            if (weatherDescriptions != null && !weatherDescriptions.isEmpty()) {
+                result.put("weatherDescriptions", new TreeMap<>(weatherDescriptions));
             }
         } else {
             throw new IllegalArgumentException("No matching hourly data found for the provided username and location.");
