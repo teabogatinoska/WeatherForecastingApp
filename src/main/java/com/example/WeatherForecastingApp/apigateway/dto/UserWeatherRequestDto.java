@@ -11,17 +11,17 @@ public class UserWeatherRequestDto {
 
     private Long userId;
     private String username;
-    private String location;
-    private String country;
+    private Double latitude;
+    private Double longitude;
 
     public UserWeatherRequestDto() {
     }
 
     @JsonCreator
-    public UserWeatherRequestDto(@JsonProperty("username") String username, @JsonProperty("location") String location, @JsonProperty("country") String country) {
+    public UserWeatherRequestDto(@JsonProperty("username") String username, @JsonProperty("latitude") Double latitude, @JsonProperty("longitude") Double longitude) {
         this.username = username;
-        this.location = location;
-        this.country = country;
+        this.latitude = latitude;
+        this.longitude = longitude;
     }
 
     @Override
@@ -29,8 +29,8 @@ public class UserWeatherRequestDto {
         return "UserWeatherRequestDto{" +
                 "userId=" + userId +
                 ", username='" + username + '\'' +
-                ", location='" + location + '\'' +
-                ", country='" + country + '\'' +
+                ", latitude='" + latitude + '\'' +
+                ", longitude='" + longitude + '\'' +
                 '}';
     }
 }

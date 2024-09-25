@@ -9,7 +9,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.web.client.RestTemplate;
 
 @EnableDiscoveryClient
-@SpringBootApplication(exclude = {DataSourceAutoConfiguration.class})
+@SpringBootApplication(scanBasePackages = { "com.example.WeatherForecastingApp.apigateway",
+        "com.example.WeatherForecastingApp.common"}, exclude = {DataSourceAutoConfiguration.class })
 public class ApiGateway {
     public static void main(String[] args) {
         System.setProperty("spring.config.name", "api-gateway");

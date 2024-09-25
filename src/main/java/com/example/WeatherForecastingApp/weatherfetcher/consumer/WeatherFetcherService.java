@@ -1,17 +1,15 @@
 package com.example.WeatherForecastingApp.weatherfetcher.consumer;
 
-import com.example.WeatherForecastingApp.apigateway.dto.UserWeatherRequestDto;
 import com.example.WeatherForecastingApp.common.EventStoreUtils;
 import com.example.WeatherForecastingApp.common.RedisCacheService;
-import com.example.WeatherForecastingApp.common.dto.EventRequest;
+import com.example.WeatherForecastingApp.common.dto.LocationDto;
+import com.example.WeatherForecastingApp.common.dto.UserDataRequestDto;
 import com.example.WeatherForecastingApp.weatherfetcher.command.WeatherApiCommand;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -45,24 +43,27 @@ WeatherFetcherService {
     @KafkaListener(topics = "user-weather-request", groupId = "weather-fetcher-group")
     public void handleWeatherRequest(String message) {
         try {
-            UserWeatherRequestDto userWeatherRequestDto = objectMapper.readValue(message, UserWeatherRequestDto.class);
-            String username = userWeatherRequestDto.getUsername();
-            String location = userWeatherRequestDto.getLocation();
+            UserDataRequestDto userDataRequestDto = objectMapper.readValue(message, UserDataRequestDto.class);
+            String username = userDataRequestDto.getUsername();
+            LocationDto location = userDataRequestDto.getLocation();
 
-            String eventData = objectMapper.writeValueAsString(userWeatherRequestDto);
+            //redisCacheService.clearAllCache();
+
+            String eventData = objectMapper.writeValueAsString(userDataRequestDto);
             eventStoreUtils.writeEventToEventStore("user-weather-requests", "UserWeatherRequest", eventData);
 
-            Map<String, Map<LocalDateTime, Integer>> cachedHourlyData = redisCacheService.getCachedHourlyData(location);
-            Map<LocalDate, Map<String, Integer>> cachedDailyData = redisCacheService.getCachedDailyData(location);
-            Map<LocalDateTime, Map<String, Double>> cachedAirQualityData = redisCacheService.getAirQualityData(location);
-            Map<LocalDateTime, String> cachedDescriptionData = redisCacheService.getDescriptionData(location);
+            Map<String, Map<LocalDateTime, Integer>> cachedHourlyData = redisCacheService.getCachedHourlyData(location.getName());
+            Map<LocalDate, Map<String, Integer>> cachedDailyData = redisCacheService.getCachedDailyData(location.getName());
+            Map<LocalDateTime, Map<String, Double>> cachedAirQualityData = redisCacheService.getAirQualityData(location.getName());
+            Map<LocalDateTime, String> cachedDescriptionData = redisCacheService.getDescriptionData(location.getName());
 
             if (cachedHourlyData != null && cachedDailyData != null && cachedDescriptionData != null) {
                 System.out.println("Cache hit: " + location);
 
                 Map<String, Object> hourlyMessage = new HashMap<>();
                 hourlyMessage.put("username", username);
-                hourlyMessage.put("location", location);
+                hourlyMessage.put("location", location.getName());
+                hourlyMessage.put("country", location.getCountry());
                 hourlyMessage.put("hourlyResults", cachedHourlyData);
                 hourlyMessage.put("airQualityResults", cachedAirQualityData);
                 hourlyMessage.put("weatherDescriptions", cachedDescriptionData);
@@ -71,7 +72,8 @@ WeatherFetcherService {
 
                 Map<String, Object> dailyMessage = new HashMap<>();
                 dailyMessage.put("username", username);
-                dailyMessage.put("location", location);
+                dailyMessage.put("location", location.getName());
+                dailyMessage.put("country", location.getCountry());
                 dailyMessage.put("dailyResults", cachedDailyData);
 
                 sendKafkaMessage("hourly-weather-data", hourlyMessage);
@@ -81,7 +83,7 @@ WeatherFetcherService {
 
                 for (WeatherApiCommand command : weatherCommands) {
                     try {
-                        command.fetchWeatherData(userWeatherRequestDto, kafkaTemplate);
+                        command.fetchWeatherData(userDataRequestDto, kafkaTemplate);
                     } catch (Exception e) {
                         System.err.println("Error executing " + command.getClass().getSimpleName() + ": " + e.getMessage());
                         e.printStackTrace();

@@ -122,10 +122,11 @@ public class WeatherDataAggregator {
             });
             String username = (String) message.get("username");
             String location = (String) message.get("location");
+            String country = (String) message.get("country");
             String jsonData = (String) message.get("weatherData");
 
             if (!timerStarted) {
-                startApiResponseTimer(username, location);
+                startApiResponseTimer(username, location, country);
                 timerStarted = true;
             }
 
@@ -138,7 +139,7 @@ public class WeatherDataAggregator {
                 successfulApis++;
 
                 if (apiCallCount == TOTAL_APIS) {
-                    processAllData(username, location);
+                    processAllData(username, location, country);
                 }
 
                 //System.out.println("HOURLY: " + getCombinedHourlyForecasts().toString());
@@ -198,18 +199,18 @@ public class WeatherDataAggregator {
         }
     }
 
-    private void startApiResponseTimer(String username, String location) {
+    private void startApiResponseTimer(String username, String location, String country) {
         apiResponseTimer = new Timer();
         apiResponseTimer.schedule(new TimerTask() {
             @Override
             public void run() {
                System.out.println("Timeout reached. Processing available data.");
-                processAllData(username, location);
+                processAllData(username, location, country);
             }
         }, TIMEOUT_DURATION);
     }
 
-    private void processAllData(String username, String location) {
+    private void processAllData(String username, String location, String country) {
         if (successfulApis >= 5) {
             System.out.println("All 5 APIs responded successfully. Processing data.");
         } else if (successfulApis >= 2) {
@@ -220,7 +221,7 @@ public class WeatherDataAggregator {
             return;
         }
 
-        weatherProcessorManager.processAllData(combinedHourlyForecasts, combinedDailyForecasts, airQualityDataMap, username, location);
+        weatherProcessorManager.processAllData(combinedHourlyForecasts, combinedDailyForecasts, airQualityDataMap, username, location, country);
 
         resetApiState();
     }

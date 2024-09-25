@@ -110,6 +110,7 @@ public class RedisCacheService {
 
     public Map<String, Map<String, Integer>> getCachedUserHourlyData(String key) {
         try {
+
             String dataJson = redisTemplate.opsForValue().get(key);
             if (dataJson != null) {
                 System.out.println("Returning cached hourly data for user: " + key);
@@ -125,6 +126,7 @@ public class RedisCacheService {
     public void cacheUserDailyData(String key, Map<LocalDate, Map<String, Integer>> dailyData) {
         try {
             String dataJson = objectMapper.writeValueAsString(dailyData);
+
             System.out.println("Cached daily data for user: " + key);
             redisTemplate.opsForValue().set(key, dataJson, CACHE_TTL, TimeUnit.HOURS);
         } catch (Exception e) {

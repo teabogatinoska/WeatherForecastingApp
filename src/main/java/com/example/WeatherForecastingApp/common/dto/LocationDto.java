@@ -8,16 +8,16 @@ import lombok.Setter;
 public class LocationDto {
     private String name;
     private String country;
+    private Double longitude;
+    private Double latitude;
 
     public LocationDto() {}
 
-    public LocationDto(String name) {
-        this.name = name;
-    }
-
-    public LocationDto(String name, String country) {
+    public LocationDto(String name, String country, Double latitude, Double longitude) {
         this.name = name;
         this.country = country;
+        this.longitude = longitude;
+        this.latitude = latitude;
     }
 
     @Override

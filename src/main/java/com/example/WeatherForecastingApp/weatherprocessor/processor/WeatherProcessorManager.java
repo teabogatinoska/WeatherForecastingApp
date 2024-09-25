@@ -49,14 +49,16 @@ public class WeatherProcessorManager {
     }
 
     public void processAllData(Map<LocalDateTime, CombinedHourlyForecast> combinedHourlyForecasts,
-                               Map<LocalDate, CombinedDailyForecast> combinedDailyForecasts, Map<LocalDateTime, AirQualityData> airQualityDataMap, String username, String location) {
+                               Map<LocalDate, CombinedDailyForecast> combinedDailyForecasts, Map<LocalDateTime, AirQualityData> airQualityDataMap, String username, String location, String country) {
         List<String> dataTypes = Arrays.asList("temperature", "humidity", "precipitation", "windSpeed");
         Map<String, Object> hourlyMessage = new HashMap<>();
         Map<String, Object> dailyMessage = new HashMap<>();
         hourlyMessage.put("username", username);
         hourlyMessage.put("location", location);
+        hourlyMessage.put("country", country);
         dailyMessage.put("username", username);
         dailyMessage.put("location", location);
+        dailyMessage.put("country", country);
 
         Map<String, Map<LocalDateTime, Integer>> hourlyResultsMap = new HashMap<>();
         Map<LocalDate, Map<String, Integer>> dailyResultsMap = new HashMap<>();

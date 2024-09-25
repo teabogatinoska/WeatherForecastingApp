@@ -36,7 +36,9 @@ public class GeoApiService {
             for (JsonNode node : root) {
                 LocationDto locationDto = new LocationDto(
                         node.path("name").asText(),
-                        node.path("country").asText()
+                        node.path("country").asText(),
+                        node.path("latitude").asDouble(),
+                        node.path("longitude").asDouble()
                 );
                 locations.add(locationDto);
             }

@@ -1,6 +1,6 @@
 package com.example.WeatherForecastingApp.weatherfetcher.command;
 
-import com.example.WeatherForecastingApp.apigateway.dto.UserWeatherRequestDto;
+import com.example.WeatherForecastingApp.common.dto.UserDataRequestDto;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -22,9 +22,13 @@ public class AccuWeatherCommand implements WeatherApiCommand {
 
 
     @Override
-    public void fetchWeatherData(UserWeatherRequestDto requestDto, KafkaTemplate<String, String> kafkaTemplate) {
-        String location = requestDto.getLocation();
-        String locationId = fetchLocationId(location);
+    public void fetchWeatherData(UserDataRequestDto requestDto, KafkaTemplate<String, String> kafkaTemplate) {
+        String location = requestDto.getLocation().getName();
+        Double requestLatitude = requestDto.getLocation().getLatitude();
+        Double requestLongitude = requestDto.getLocation().getLongitude();
+
+        String locationId = fetchLocationId(location, requestLatitude, requestLongitude);
+
         try {
             if (locationId != null) {
                 String apiUrl = String.format(WEATHER_API_URL, locationId);
@@ -37,8 +41,7 @@ public class AccuWeatherCommand implements WeatherApiCommand {
 
                 String messageJson = objectMapper.writeValueAsString(message);
                 kafkaTemplate.send(TOPIC, messageJson);
-            }
-            else {
+            } else {
                 System.out.println("Location ID could not be found for: " + location);
             }
         } catch (Exception e) {
@@ -46,23 +49,42 @@ public class AccuWeatherCommand implements WeatherApiCommand {
         }
     }
 
-    private String fetchLocationId(String location) {
-        String url = GEO_API_URL + location;
+    private String fetchLocationId(String location, Double requestLatitude, Double requestLongitude) {
+        String url = String.format(GEO_API_URL, location);
         try {
             String response = restTemplate.getForObject(url, String.class);
             JsonNode root = objectMapper.readTree(response);
+
             if (root.isArray() && root.size() > 0) {
-                JsonNode firstResult = root.get(0);
-                return firstResult.path("Key").asText();
+                for (JsonNode locationNode : root) {
+                    double responseLatitude = locationNode.path("GeoPosition").path("Latitude").asDouble();
+                    double responseLongitude = locationNode.path("GeoPosition").path("Longitude").asDouble();
+
+                    if (compareCoordinates(requestLatitude, responseLatitude) && compareCoordinates(requestLongitude, responseLongitude)) {
+                        return locationNode.path("Key").asText();
+                    }
+                }
             }
-        }
-        catch (HttpServerErrorException.ServiceUnavailable e) {
+        } catch (HttpServerErrorException.ServiceUnavailable e) {
             System.err.println("AccuWeather API limit exceeded while fetching location ID: " + e.getMessage());
         } catch (Exception e) {
             e.printStackTrace();
         }
         return null;
     }
+
+    private boolean compareCoordinates(Double requestCoordinate, Double responseCoordinate) {
+
+        double roundedRequest = Math.round(requestCoordinate * 10.0) / 10.0;
+        double roundedResponse = Math.round(responseCoordinate * 10.0) / 10.0;
+
+        if (roundedRequest == roundedResponse) {
+            return true;
+        }
+        double tolerance = 0.01;
+        return Math.abs(roundedRequest - roundedResponse) <= tolerance;
+    }
+
 
     private String fetchWeatherDataFromAPI(String apiUrl) {
         return restTemplate.getForObject(apiUrl, String.class);

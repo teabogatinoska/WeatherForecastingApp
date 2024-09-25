@@ -21,9 +21,9 @@ public class WeatherPresenterController {
 
 
     @GetMapping(value="/hourly")
-    public ResponseEntity<Map<String, Object>> getHourlyData(@RequestParam String username, @RequestParam String location) {
+    public ResponseEntity<Map<String, Object>> getHourlyData(@RequestParam String username, @RequestParam String location, @RequestParam String country) {
         try {
-            Map<String, Object> data = weatherPresenterService.getHourlyData(username, location);
+            Map<String, Object> data = weatherPresenterService.getHourlyData(username, location, country);
             return ResponseEntity.ok(data);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
@@ -31,9 +31,9 @@ public class WeatherPresenterController {
     }
 
     @GetMapping(value = "/daily")
-    public ResponseEntity<Map<String, Object>> getDailyData(@RequestParam String username, @RequestParam String location) {
+    public ResponseEntity<Map<String, Object>> getDailyData(@RequestParam String username, @RequestParam String location, @RequestParam String country) {
         try {
-            Map<String, Object> data = weatherPresenterService.getDailyData(username, location);
+            Map<String, Object> data = weatherPresenterService.getDailyData(username, location, country);
             return ResponseEntity.ok(data);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));

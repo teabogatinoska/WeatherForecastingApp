@@ -25,8 +25,8 @@ public class LocationSearchService {
     }
 
     public void updateRecentSearch(Long userId, LocationDto locationDto) {
+        System.out.println("Inside API Service: " + locationDto.toString());
         String url = authServiceUrl + "/user/" + userId + "/recent-search";
-        System.out.println("LocationDTO: " + locationDto.toString());
         restTemplate.postForObject(url, locationDto, Void.class);
     }
 

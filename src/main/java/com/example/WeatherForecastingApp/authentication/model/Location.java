@@ -18,16 +18,20 @@ public class Location {
     private Long id;
 
     @NotBlank
-    @Size(max = 20)
     private String name;
 
     @NotBlank
-    @Size(max = 20)
     private String country;
 
-    public Location(String name, String country) {
+    private Double latitude;
+
+    private Double longitude;
+
+    public Location(String name, String country, Double latitude, Double longitude) {
         this.name = name;
         this.country = country;
+        this.latitude = latitude;
+        this.longitude = longitude;
     }
 
     public Location() {

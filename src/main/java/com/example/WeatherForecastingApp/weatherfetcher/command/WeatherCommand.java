@@ -1,6 +1,6 @@
 package com.example.WeatherForecastingApp.weatherfetcher.command;
 
-import com.example.WeatherForecastingApp.apigateway.dto.UserWeatherRequestDto;
+import com.example.WeatherForecastingApp.common.dto.UserDataRequestDto;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
@@ -11,24 +11,29 @@ import java.util.Map;
 
 @Component
 public class WeatherCommand implements WeatherApiCommand{
-    private static final String WEATHER_API_URL = "http://api.weatherapi.com/v1/forecast.json?key=6c9e69e77b61491183781339240307&q=%s&days=7&aqi=no&alerts=no";
+    private static final String WEATHER_API_URL = "http://api.weatherapi.com/v1/forecast.json?key=6c9e69e77b61491183781339240307&q=%s,%s&days=7&aqi=no&alerts=no";
     private static final String TOPIC = "weather-api3-data";
 
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
     @Override
-    public void fetchWeatherData(UserWeatherRequestDto requestDto, KafkaTemplate<String, String> kafkaTemplate) {
-       try {
-           String location = requestDto.getLocation();
-           String apiUrl = String.format(WEATHER_API_URL, location);
-           String weatherData = fetchWeatherDataFromAPI(apiUrl);
-           Map<String, Object> message = new HashMap<>();
-           message.put("username", requestDto.getUsername());
-           message.put("location", requestDto.getLocation());
-           message.put("weatherData", weatherData);
+    public void fetchWeatherData(UserDataRequestDto requestDto, KafkaTemplate<String, String> kafkaTemplate) {
+        try {
+            Double latitude = requestDto.getLocation().getLatitude();
+            Double longitude = requestDto.getLocation().getLongitude();
+            if (latitude != null && longitude != null) {
+                String apiUrl = String.format(WEATHER_API_URL, latitude.toString(), longitude.toString());
 
-           String messageJson = objectMapper.writeValueAsString(message);
-           kafkaTemplate.send(TOPIC, messageJson);
+                String weatherData = fetchWeatherDataFromAPI(apiUrl);
+                Map<String, Object> message = new HashMap<>();
+                message.put("username", requestDto.getUsername());
+                message.put("location", requestDto.getLocation().getName());
+                message.put("country", requestDto.getLocation().getCountry());
+                message.put("weatherData", weatherData);
+
+                String messageJson = objectMapper.writeValueAsString(message);
+                kafkaTemplate.send(TOPIC, messageJson);
+            }
        } catch (Exception e) {
            e.printStackTrace();
        }
