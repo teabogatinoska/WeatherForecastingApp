@@ -36,7 +36,8 @@ public class AccuWeatherCommand implements WeatherApiCommand {
 
                 Map<String, Object> message = new HashMap<>();
                 message.put("username", requestDto.getUsername());
-                message.put("location", requestDto.getLocation());
+                message.put("location", requestDto.getLocation().getName());
+                message.put("country", requestDto.getLocation().getCountry());
                 message.put("weatherData", weatherData);
 
                 String messageJson = objectMapper.writeValueAsString(message);
