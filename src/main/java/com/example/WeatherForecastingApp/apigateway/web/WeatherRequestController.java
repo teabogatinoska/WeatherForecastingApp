@@ -28,7 +28,7 @@ public class WeatherRequestController {
 
 
     @PostMapping("/request")
-    public String requestWeatherData(@RequestBody UserWeatherRequestDto requestDto) {
+    public LocationDto requestWeatherData(@RequestBody UserWeatherRequestDto requestDto) {
 
         RestTemplate restTemplate = new RestTemplate();
         String apiUrl = GEOAPIFY_API_URL
@@ -47,14 +47,16 @@ public class WeatherRequestController {
         System.out.println("City and country:" + city + " and country:" + country);
 
         LocationDto locationDto = new LocationDto(city, country, requestDto.getLatitude(), requestDto.getLongitude());
-        locationSearchService.updateRecentSearch(requestDto.getUserId(), locationDto);
+        Long locationId = locationSearchService.updateRecentSearch(requestDto.getUserId(), locationDto);
+        System.out.println("Location ID: " + locationId);
+        locationDto.setId(locationId);
 
         UserDataRequestDto userDataRequestDto = new UserDataRequestDto(requestDto.getUserId(), requestDto.getUsername(), locationDto);
         kafkaTemplate.send(REQUEST_TOPIC, userDataRequestDto);
         System.out.println(requestDto.toString());
 
 
-
-        return "Weather request for " + city + ", " + country + " by user " + requestDto.getUsername() + " has been received";
+        return locationDto;
+       // return "Weather request for " + city + ", " + country + " by user " + requestDto.getUsername() + " has been received";
     }
 }

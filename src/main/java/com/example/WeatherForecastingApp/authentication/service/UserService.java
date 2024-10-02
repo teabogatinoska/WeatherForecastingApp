@@ -10,7 +10,7 @@ public interface UserService {
 
     User addFavoriteLocation(Long userId, String location, String country, Double latitude, Double longitude);
     User removeFavoriteLocation(Long userId, Long locationId);
-    User addRecentSearch(Long userId, String location, String country, Double latitude, Double longitude);
+    Long addRecentSearch(Long userId, String location, String country, Double latitude, Double longitude);
     List<Location> getFavoriteLocations(Long userId);
     List<Location> getRecentSearches(Long userId);
 

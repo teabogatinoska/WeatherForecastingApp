@@ -41,7 +41,7 @@ public class WeatherDataAggregator {
     private int successfulApis = 0;
     private Timer apiResponseTimer;
     private boolean timerStarted = false;
-    private final long TIMEOUT_DURATION = 5000;
+    private final long TIMEOUT_DURATION = 2000;
 
     @Autowired
     private final EventStoreUtils eventStoreUtils;
@@ -131,7 +131,7 @@ public class WeatherDataAggregator {
             }
 
             WeatherDataParser parser = parsers.get(topic);
-            System.out.println("TOPIC: " + topic);
+            //System.out.println("TOPIC: " + topic);
             apiCallCount++;
             if (parser != null) {
                 WeatherData weatherData = parser.parse(jsonData);
@@ -164,7 +164,7 @@ public class WeatherDataAggregator {
             combinedHourlyForecast.addHumidity(forecast.getHumidity());
             combinedHourlyForecast.addPrecipitationProbability(forecast.getPrecipitationProbability());
             combinedHourlyForecast.addWindSpeed(forecast.getWindSpeed());
-            System.out.println("Forecast description: " + forecast.getDescription());
+            //System.out.println("Forecast description: " + forecast.getDescription());
             combinedHourlyForecast.setDescription(forecast.getDescription());
 
 

@@ -32,6 +32,8 @@ public class WeatherPresenterGatewayController {
             String url = weatherPresenterServiceUrl + "/forecast/hourly?username=" + username + "&location=" + encodedLocation
                     + "&country=" + encodedCountry;
 
+            System.out.println("URL: " + url);
+
             HttpHeaders headers = new HttpHeaders();
 
             headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));

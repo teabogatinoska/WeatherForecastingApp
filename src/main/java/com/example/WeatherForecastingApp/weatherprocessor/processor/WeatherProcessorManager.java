@@ -85,7 +85,7 @@ public class WeatherProcessorManager {
 
         combinedHourlyForecasts.forEach((timestamp, combinedHourlyForecast) -> {
             if (combinedHourlyForecast.getDescription() != null) {
-                System.out.println("Final description for " + timestamp + ": " + combinedHourlyForecast.getDescription());
+                //System.out.println("Final description for " + timestamp + ": " + combinedHourlyForecast.getDescription());
                 descriptionResultsMap.put(timestamp, combinedHourlyForecast.getDescription());
             }
         });

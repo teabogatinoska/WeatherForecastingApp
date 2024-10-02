@@ -38,7 +38,7 @@ public class WeatherApiParser implements WeatherDataParser{
                     double precipitationProbability = hourNode.path("chance_of_rain").asDouble();
                     double windSpeed = hourNode.path("wind_kph").asDouble();
                     String description = hourNode.path("condition").path("text").asText();
-                    System.out.println("Description: " + timestamp + " " + description);
+                    //System.out.println("Description: " + timestamp + " " + description);
                     hourlyForecasts.add(new HourlyForecast(timestamp, temperature, humidity, precipitationProbability, windSpeed, description));
                 }
             }

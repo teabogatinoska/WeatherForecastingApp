@@ -24,10 +24,10 @@ public class LocationSearchService {
         this.restTemplate = restTemplate;
     }
 
-    public void updateRecentSearch(Long userId, LocationDto locationDto) {
+    public Long updateRecentSearch(Long userId, LocationDto locationDto) {
         System.out.println("Inside API Service: " + locationDto.toString());
         String url = authServiceUrl + "/user/" + userId + "/recent-search";
-        restTemplate.postForObject(url, locationDto, Void.class);
+        return restTemplate.postForObject(url, locationDto, Long.class);
     }
 
     public List<LocationDto> getRecentSearches(Long userId) {

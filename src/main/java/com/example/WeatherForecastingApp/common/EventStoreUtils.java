@@ -29,7 +29,7 @@ public class EventStoreUtils {
         String url = eventStoreServiceUrl + "/api/events/write/" + streamName;
 
         EventRequest eventRequest = new EventRequest(streamName, eventType, eventData);
-        System.out.println("EVENT REQUEST: " + eventRequest.toString());
+        //System.out.println("EVENT REQUEST: " + eventRequest.toString());
         try {
             System.out.println("Sending POST request to: " + url);
             restTemplate.postForEntity(url, eventRequest, String.class);

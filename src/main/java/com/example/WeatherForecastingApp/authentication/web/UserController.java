@@ -38,10 +38,10 @@ public class UserController {
     }
 
     @PostMapping("/{userId}/recent-search")
-    public ResponseEntity<User> updateRecentSearch(@PathVariable Long userId, @RequestBody LocationDto locationDto) {
-        User user = userService.addRecentSearch(userId, locationDto.getName(), locationDto.getCountry(), locationDto.getLatitude(), locationDto.getLongitude());
+    public ResponseEntity<Long> updateRecentSearch(@PathVariable Long userId, @RequestBody LocationDto locationDto) {
+        Long locationId = userService.addRecentSearch(userId, locationDto.getName(), locationDto.getCountry(), locationDto.getLatitude(), locationDto.getLongitude());
         System.out.println("Inside auth controller: " + locationDto.toString());
-        return ResponseEntity.ok(user);
+        return ResponseEntity.ok(locationId);
     }
 
     @GetMapping("/{userId}/favorites")

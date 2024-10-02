@@ -38,16 +38,16 @@ WeatherFetcherService {
     public WeatherFetcherService(List<WeatherApiCommand> weatherCommands, EventStoreUtils eventStoreUtils) {
         this.weatherCommands = weatherCommands;
         this.eventStoreUtils = eventStoreUtils;
+
     }
 
     @KafkaListener(topics = "user-weather-request", groupId = "weather-fetcher-group")
     public void handleWeatherRequest(String message) {
         try {
+            //redisCacheService.clearAllCache();
             UserDataRequestDto userDataRequestDto = objectMapper.readValue(message, UserDataRequestDto.class);
             String username = userDataRequestDto.getUsername();
             LocationDto location = userDataRequestDto.getLocation();
-
-            //redisCacheService.clearAllCache();
 
             String eventData = objectMapper.writeValueAsString(userDataRequestDto);
             eventStoreUtils.writeEventToEventStore("user-weather-requests", "UserWeatherRequest", eventData);

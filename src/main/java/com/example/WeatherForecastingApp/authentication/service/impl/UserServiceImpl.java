@@ -87,7 +87,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User addRecentSearch(Long userId, String location, String country, Double latitude, Double longitude) {
+    public Long addRecentSearch(Long userId, String location, String country, Double latitude, Double longitude) {
         User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
         System.out.println("Inside auth service: " + location + " " + country);
         String normalizedLocation = location.trim().replaceAll("\\s+", " ");
@@ -99,7 +99,8 @@ public class UserServiceImpl implements UserService {
                 .orElseGet(() -> locationRepository.save(new Location(normalizedLocation, normalizedCountry, latitude, longitude)));
 
         user.addRecentSearch(recentLocation);
-        return userRepository.save(user);
+        userRepository.save(user);
+        return recentLocation.getId();
     }
 
     @Override
