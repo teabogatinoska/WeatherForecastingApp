@@ -18,22 +18,32 @@ public class Location {
     private Long id;
 
     @NotBlank
-    @Size(max = 20)
     private String name;
 
-    private double latitude;
-    private double longitude;
-
+    @NotBlank
     private String country;
 
-    public Location(String name, double latitude, double longitude, String country) {
+    private Double latitude;
+
+    private Double longitude;
+
+    public Location(String name, String country, Double latitude, Double longitude) {
         this.name = name;
+        this.country = country;
         this.latitude = latitude;
         this.longitude = longitude;
-        this.country = country;
     }
 
     public Location() {
 
+    }
+
+    @Override
+    public String toString() {
+        return "Location{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", country='" + country + '\'' +
+                '}';
     }
 }

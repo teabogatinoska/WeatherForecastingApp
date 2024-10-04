@@ -12,6 +12,7 @@ import org.springframework.web.client.RestTemplate;
         "com.example.WeatherForecastingApp.common"}, exclude = {DataSourceAutoConfiguration.class })
 @EnableDiscoveryClient
 public class WeatherFetcherApplication {
+
     public static void main(String[] args) {
         System.setProperty("spring.config.name", "weather-fetcher");
         SpringApplication.run(WeatherFetcherApplication.class, args);

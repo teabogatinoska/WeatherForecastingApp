@@ -11,6 +11,5 @@ import java.util.List;
 @Setter
 public class WeatherAlertEvent {
     private Long userId;
-    private Location location;
-    private List<WeatherAlert> alerts;
+    private List<LocationAlerts> locationAlerts;
 }

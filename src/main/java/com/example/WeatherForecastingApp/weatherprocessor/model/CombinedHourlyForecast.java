@@ -15,14 +15,10 @@ public class CombinedHourlyForecast {
     private final List<Double> humidities = new ArrayList<>();
     private final List<Double> precipitationProbabilities = new ArrayList<>();
     private final List<Double> windSpeeds = new ArrayList<>();
+    private String description;
 
     public CombinedHourlyForecast(LocalDateTime timestamp) {
         this.timestamp = timestamp;
-    }
-
-    public CombinedHourlyForecast(LocalDateTime timestamp, double temperature) {
-        this.timestamp = timestamp;
-        this.temperatures.add(temperature);
     }
 
     public void addTemperature(double temperature) {
@@ -41,6 +37,7 @@ public class CombinedHourlyForecast {
         windSpeeds.add(windSpeed);
     }
 
+
     @Override
     public String toString() {
         return "CombinedHourlyForecast{" +
@@ -49,6 +46,7 @@ public class CombinedHourlyForecast {
                 ", humidities=" + humidities +
                 ", precipitationProbabilities=" + precipitationProbabilities +
                 ", windSpeeds=" + windSpeeds +
+                ", description=" + description +
                 '}';
     }
 }

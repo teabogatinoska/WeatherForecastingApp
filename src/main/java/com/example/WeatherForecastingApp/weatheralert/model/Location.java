@@ -9,7 +9,6 @@ import lombok.*;
 @Setter
 public class Location {
     private String name;
-    private double latitude;
-    private double longitude;
+    private String country;
 }
 

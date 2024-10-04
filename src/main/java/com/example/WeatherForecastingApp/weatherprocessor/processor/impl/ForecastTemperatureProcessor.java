@@ -42,7 +42,7 @@ public class ForecastTemperatureProcessor implements HourlyDataProcessor, DailyT
                     .flatMap(hourlyForecast -> hourlyForecast.getTemperatures().stream())
                     .map(temp -> Math.round(temp * 10) / 10.0)
                     .toList();
-            System.out.println("All temperatures for " + date + ": " + allTemperatures);
+            //System.out.println("All temperatures for " + date + ": " + allTemperatures);
 
             List<Double> lowestTemperatures = allTemperatures.stream()
                     .sorted()
@@ -53,8 +53,8 @@ public class ForecastTemperatureProcessor implements HourlyDataProcessor, DailyT
                     .sorted(Comparator.reverseOrder())
                     .limit(10)
                     .toList();
-            System.out.println("Lowest 10 temperatures for " + date + ": " + lowestTemperatures);
-            System.out.println("Highest 10 temperatures for " + date + ": " + highestTemperatures);
+           // System.out.println("Lowest 10 temperatures for " + date + ": " + lowestTemperatures);
+            //System.out.println("Highest 10 temperatures for " + date + ": " + highestTemperatures);
 
             double averageMinTemperature  = lowestTemperatures.stream()
                     .mapToDouble(Double::doubleValue)

@@ -1,5 +1,6 @@
 package com.example.WeatherForecastingApp.apigateway.web;
 
+import com.example.WeatherForecastingApp.apigateway.dto.GeoLocationDto;
 import com.example.WeatherForecastingApp.apigateway.service.LocationSearchService;
 import com.example.WeatherForecastingApp.common.dto.LocationDto;
 import com.example.WeatherForecastingApp.apigateway.service.GeoApiService;
@@ -27,7 +28,7 @@ public class LocationSearchController {
     }
 
     @GetMapping("/search")
-    public List<LocationDto> searchLocation(@RequestParam String query) throws JsonProcessingException {
+    public List<GeoLocationDto> searchLocation(@RequestParam String query) throws JsonProcessingException {
         return geoApiService.searchLocations(query);
     }
 
@@ -57,4 +58,21 @@ public class LocationSearchController {
             ));
         }
     }
+
+    @DeleteMapping("/{userId}/favorite/{locationId}")
+    public ResponseEntity<?> removeFavoriteLocation(@PathVariable Long userId, @PathVariable Long locationId) {
+        try {
+            locationSearchService.removeFavoriteLocation(userId, locationId);
+            return ResponseEntity.status(HttpStatus.OK).body(Map.of(
+                    "message", "Favorite location removed successfully",
+                    "userId", userId,
+                    "locationId", locationId
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "error", "An unexpected error occurred"
+            ));
+        }
+    }
+
 }

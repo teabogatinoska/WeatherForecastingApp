@@ -6,21 +6,26 @@ import lombok.Setter;
 @Getter
 @Setter
 public class LocationDto {
+    private Long id;
     private String name;
-    private double latitude;
-    private double longitude;
     private String country;
+    private Double longitude;
+    private Double latitude;
 
     public LocationDto() {}
 
-    public LocationDto(String name) {
+    public LocationDto(String name, String country, Double latitude, Double longitude) {
         this.name = name;
+        this.country = country;
+        this.longitude = longitude;
+        this.latitude = latitude;
     }
 
-    public LocationDto(String name, double latitude, double longitude, String country) {
-        this.name = name;
-        this.latitude = latitude;
-        this.longitude = longitude;
-        this.country = country;
+    @Override
+    public String toString() {
+        return "LocationDto{" +
+                "name='" + name + '\'' +
+                ", country='" + country + '\'' +
+                '}';
     }
 }

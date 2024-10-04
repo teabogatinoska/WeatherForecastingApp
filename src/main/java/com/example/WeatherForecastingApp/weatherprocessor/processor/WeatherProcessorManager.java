@@ -1,6 +1,7 @@
 package com.example.WeatherForecastingApp.weatherprocessor.processor;
 
 import com.example.WeatherForecastingApp.common.RedisCacheService;
+import com.example.WeatherForecastingApp.weatherprocessor.model.AirQualityData;
 import com.example.WeatherForecastingApp.weatherprocessor.model.CombinedDailyForecast;
 import com.example.WeatherForecastingApp.weatherprocessor.model.CombinedHourlyForecast;
 import com.example.WeatherForecastingApp.weatherprocessor.processor.impl.ForecastHumidityProcessor;
@@ -48,18 +49,21 @@ public class WeatherProcessorManager {
     }
 
     public void processAllData(Map<LocalDateTime, CombinedHourlyForecast> combinedHourlyForecasts,
-                               Map<LocalDate, CombinedDailyForecast> combinedDailyForecasts, String username, String location) {
+                               Map<LocalDate, CombinedDailyForecast> combinedDailyForecasts, Map<LocalDateTime, AirQualityData> airQualityDataMap, String username, String location, String country) {
         List<String> dataTypes = Arrays.asList("temperature", "humidity", "precipitation", "windSpeed");
-
         Map<String, Object> hourlyMessage = new HashMap<>();
         Map<String, Object> dailyMessage = new HashMap<>();
         hourlyMessage.put("username", username);
         hourlyMessage.put("location", location);
+        hourlyMessage.put("country", country);
         dailyMessage.put("username", username);
         dailyMessage.put("location", location);
+        dailyMessage.put("country", country);
 
         Map<String, Map<LocalDateTime, Integer>> hourlyResultsMap = new HashMap<>();
         Map<LocalDate, Map<String, Integer>> dailyResultsMap = new HashMap<>();
+        Map<LocalDateTime, String> descriptionResultsMap = new HashMap<>();
+
 
         for (String type : dataTypes) {
             Map<LocalDateTime, Integer> hourlyResults = getHourlyData(type, combinedHourlyForecasts);
@@ -78,16 +82,38 @@ public class WeatherProcessorManager {
                 });
             }
         }
+
+        combinedHourlyForecasts.forEach((timestamp, combinedHourlyForecast) -> {
+            if (combinedHourlyForecast.getDescription() != null) {
+                //System.out.println("Final description for " + timestamp + ": " + combinedHourlyForecast.getDescription());
+                descriptionResultsMap.put(timestamp, combinedHourlyForecast.getDescription());
+            }
+        });
+
+
+        Map<LocalDateTime, Map<String, Double>> airQualityResults = new HashMap<>();
+        airQualityDataMap.forEach((timestamp, airQualityData) -> {
+            Map<String, Double> airQualityValues = new HashMap<>();
+            airQualityValues.put("pm10", airQualityData.getPm10());
+            airQualityValues.put("pm2_5", airQualityData.getPm25());
+            airQualityResults.put(timestamp, airQualityValues);
+
+        });
+
         hourlyMessage.put("hourlyResults", hourlyResultsMap);
+        hourlyMessage.put("airQualityResults", airQualityResults);
         dailyMessage.put("dailyResults", dailyResultsMap);
+        hourlyMessage.put("weatherDescriptions", descriptionResultsMap);
+
 
         redisCacheService.cacheHourlyData(location, hourlyResultsMap);
         redisCacheService.cacheDailyData(location, dailyResultsMap);
+        redisCacheService.cacheAirQualityData(location, airQualityResults);
+        redisCacheService.cacheDescriptionData(location, descriptionResultsMap);
 
         sendKafkaMessage("hourly-weather-data", hourlyMessage);
         sendKafkaMessage("daily-weather-data", dailyMessage);
     }
-
 
     public Map<LocalDateTime, Integer> getHourlyData(String type, Map<LocalDateTime, CombinedHourlyForecast> combinedHourlyForecasts) {
         HourlyDataProcessor processor = hourlyProcessors.get(type);
