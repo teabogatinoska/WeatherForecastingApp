@@ -1,6 +1,7 @@
 package com.example.WeatherForecastingApp.apigateway.service;
 
 
+import com.example.WeatherForecastingApp.apigateway.dto.GeoLocationDto;
 import com.example.WeatherForecastingApp.common.dto.LocationDto;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -26,19 +27,20 @@ public class GeoApiService {
         this.objectMapper = objectMapper;
     }
 
-    public List<LocationDto> searchLocations(String query) throws JsonProcessingException {
+    public List<GeoLocationDto> searchLocations(String query) throws JsonProcessingException {
         String url = String.format(GEO_API_URL, query);
         String response = restTemplate.getForObject(url, String.class);
 
         JsonNode root = objectMapper.readTree(response).path("results");
-        List<LocationDto> locations = new ArrayList<>();
+        List<GeoLocationDto> locations = new ArrayList<>();
         if (root.isArray()) {
             for (JsonNode node : root) {
-                LocationDto locationDto = new LocationDto(
+                GeoLocationDto locationDto = new GeoLocationDto(
                         node.path("name").asText(),
                         node.path("country").asText(),
                         node.path("latitude").asDouble(),
-                        node.path("longitude").asDouble()
+                        node.path("longitude").asDouble(),
+                        node.path("admin1").asText()
                 );
                 locations.add(locationDto);
             }

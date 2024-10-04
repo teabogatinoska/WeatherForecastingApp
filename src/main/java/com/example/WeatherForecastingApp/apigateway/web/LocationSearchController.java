@@ -1,5 +1,6 @@
 package com.example.WeatherForecastingApp.apigateway.web;
 
+import com.example.WeatherForecastingApp.apigateway.dto.GeoLocationDto;
 import com.example.WeatherForecastingApp.apigateway.service.LocationSearchService;
 import com.example.WeatherForecastingApp.common.dto.LocationDto;
 import com.example.WeatherForecastingApp.apigateway.service.GeoApiService;
@@ -27,7 +28,7 @@ public class LocationSearchController {
     }
 
     @GetMapping("/search")
-    public List<LocationDto> searchLocation(@RequestParam String query) throws JsonProcessingException {
+    public List<GeoLocationDto> searchLocation(@RequestParam String query) throws JsonProcessingException {
         return geoApiService.searchLocations(query);
     }
 
