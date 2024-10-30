@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.31.2 (a92241f79)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: weather-fetcher-service
+  name: weather-fetcher-service
+spec:
+  type: ClusterIP
+  ports:
+    - name: "3333"
+      port: 3333
+      targetPort: 3333
+  selector:
+    io.kompose.service: weather-fetcher-service
+status:
+  loadBalancer: {}

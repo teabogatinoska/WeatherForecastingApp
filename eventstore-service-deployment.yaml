@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.31.2 (a92241f79)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: eventstore-service
+  name: eventstore-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: eventstore-service
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert
+        kompose.version: 1.31.2 (a92241f79)
+      creationTimestamp: null
+      labels:
+        io.kompose.network/weatherapp-my-network: "true"
+        io.kompose.service: eventstore-service
+    spec:
+      containers:
+        - env:
+            - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+              value: http://registration-service:8761/eureka/
+            - name: EVENTSTORE_DB_URI
+              value: esdb://eventstore-db:2113
+            - name: SPRING_DATA_REDIS_HOST
+              value: redis-master
+            - name: SPRING_DATA_REDIS_PORT
+              value: "6379"
+          image: gcr.io/dissertation-437908/eventstore-service:latest
+          name: eventstore-service
+          ports:
+            - containerPort: 8081
+              hostPort: 8081
+              protocol: TCP
+          resources: {}
+      restartPolicy: Always
+status: {}

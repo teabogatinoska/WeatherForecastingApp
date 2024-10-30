@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eventstore-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: eventstore-db
+  template:
+    metadata:
+      labels:
+        io.kompose.service: eventstore-db
+    spec:
+      containers:
+        - name: eventstore-db
+          image: eventstore/eventstore:latest
+          ports:
+            - containerPort: 2113
+          env:
+            - name: EVENTSTORE_CLUSTER_SIZE
+              value: "1"
+            - name: EVENTSTORE_INSECURE
+              value: "True"
+            - name: EVENTSTORE_RUN_PROJECTIONS
+              value: "All"
+            - name: EVENTSTORE_START_STANDARD_PROJECTIONS
+              value: "true"
+            - name: EVENTSTORE_ALLOW_UNKNOWN_OPTIONS
+              value: "true"
+          volumeMounts:
+            - mountPath: /var/lib/eventstore/data
+              name: eventstore-data
+      volumes:
+        - name: eventstore-data
+          persistentVolumeClaim:
+            claimName: eventstore-data
