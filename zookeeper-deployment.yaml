@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zookeeper
+  labels:
+    io.kompose.service: zookeeper
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: zookeeper
+  template:
+    metadata:
+      labels:
+        io.kompose.network/weatherapp-my-network: "true"
+        io.kompose.service: zookeeper
+    spec:
+      containers:
+        - name: zookeeper
+          image: zookeeper:3.6.3
+          ports:
+            - containerPort: 2181
+              protocol: TCP
+          env:
+            - name: ZOO_MY_ID
+              value: "1"
+            - name: ZOO_CLIENT_PORT
+              value: "2181"
+            - name: ZOO_AUTOPURGE_PURGEINTERVAL
+              value: "1"
+            - name: ZOO_AUTOPURGE_SNAPRETAINCOUNT
+              value: "3"
+      restartPolicy: Always

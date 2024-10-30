@@ -1,0 +1,231 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres:14
+    container_name: postgres
+    environment:
+      POSTGRES_DB: userdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      retries: 5
+    networks:
+      - my_network
+
+  authentication-service:
+      image: authentication-service:latest
+      container_name: authentication-service
+      depends_on:
+        - postgres
+        - registration-service
+        - redis-master
+      environment:
+        EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://registration-service:8761/eureka/
+        SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/userdb
+        SPRING_DATASOURCE_USERNAME: postgres
+        SPRING_DATASOURCE_PASSWORD: postgres
+        SPRING_DATA_REDIS_HOST: redis-master
+        SPRING_DATA_REDIS_PORT: 6379
+      ports:
+        - "2222:2222"
+      build:
+        context: ./Authentication
+        dockerfile: Dockerfile
+      networks:
+        - my_network
+
+  weather-processor-service:
+    image: weather-processor-service:latest
+    container_name: weather-processor-service
+    depends_on:
+      - registration-service
+      - redis-master
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://registration-service:8761/eureka/
+      SPRING_DATA_REDIS_HOST: redis-master
+      SPRING_DATA_REDIS_PORT: 6379
+    ports:
+      - "4444:4444"
+    build:
+      context: ./WeatherProcessor
+      dockerfile: Dockerfile
+    networks:
+      - my_network
+
+  weather-presenter-service:
+    image: weather-presenter-service:latest
+    container_name: weather-presenter-service
+    depends_on:
+      - registration-service
+      - redis-master
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://registration-service:8761/eureka/
+      SPRING_DATA_REDIS_HOST: redis-master
+      SPRING_DATA_REDIS_PORT: 6379
+    ports:
+      - "5555:5555"
+    build:
+      context: ./WeatherPresenter
+      dockerfile: Dockerfile
+    networks:
+      - my_network
+
+  weather-fetcher-service:
+    image: weather-fetcher-service:latest
+    container_name: weather-fetcher-service
+    depends_on:
+      - registration-service
+      - redis-master
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://registration-service:8761/eureka/
+      SPRING_DATA_REDIS_HOST: redis-master
+      SPRING_DATA_REDIS_PORT: 6379
+    ports:
+      - "3333:3333"
+    build:
+      context: ./WeatherFetcher
+      dockerfile: Dockerfile
+    networks:
+      - my_network
+
+  weather-alert-service:
+    image: weather-alert-service:latest
+    container_name: weather-alert-service
+    depends_on:
+      - registration-service
+      - redis-master
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://registration-service:8761/eureka/
+      SPRING_DATA_REDIS_HOST: redis-master
+      SPRING_DATA_REDIS_PORT: 6379
+    ports:
+      - "6666:6666"
+    build:
+      context: ./WeatherAlert
+      dockerfile: Dockerfile
+    networks:
+      - my_network
+
+  registration-service:
+    image: registration-service:latest
+    container_name: registration-service
+    depends_on:
+      - postgres
+      - redis-master
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://registration-service:8761/eureka/
+      SPRING_DATA_REDIS_HOST: redis-master
+      SPRING_DATA_REDIS_PORT: 6379
+    ports:
+      - "8761:8761"
+    build:
+      context: ./Registration
+      dockerfile: Dockerfile
+    networks:
+      - my_network
+
+  eventstore-db:
+    image: eventstore/eventstore:latest
+    container_name: eventstore-db
+    environment:
+      - EVENTSTORE_CLUSTER_SIZE=1
+      - EVENTSTORE_RUN_PROJECTIONS=All
+      - EVENTSTORE_START_STANDARD_PROJECTIONS=true
+      - EVENTSTORE_HTTP_PORT=2113
+      - EVENTSTORE_INSECURE=True
+    ports:
+      - "2113:2113"
+    networks:
+      - my_network
+
+
+  eventstore-service:
+      image: eventstore-service:latest
+      container_name: eventstore-service
+      environment:
+        EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://registration-service:8761/eureka/
+        SPRING_DATA_REDIS_HOST: redis-master
+        SPRING_DATA_REDIS_PORT: 6379
+        EVENTSTORE_DB_URI: esdb://eventstore-db:2113
+      ports:
+        - "8081:8081"
+      build:
+        context: ./EventStore
+        dockerfile: Dockerfile
+      networks:
+        - my_network
+
+
+  api-gateway-service:
+    image: api-gateway-service:latest
+    container_name: api-gateway-service
+    depends_on:
+      - authentication-service
+      - registration-service
+      - weather-processor-service
+      - weather-presenter-service
+      - weather-fetcher-service
+      - weather-alert-service
+      - redis-master
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://registration-service:8761/eureka/
+      SPRING_DATA_REDIS_HOST: redis-master
+      SPRING_DATA_REDIS_PORT: 6379
+    ports:
+      - "8080:8080"
+    build:
+      context: ./ApiGateway
+      dockerfile: Dockerfile
+    networks:
+      - my_network
+
+  zookeeper:
+    image: wurstmeister/zookeeper:3.4.6
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    networks:
+      - my_network
+
+  kafka:
+    image: wurstmeister/kafka:2.13-2.7.0
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:9092,EXTERNAL://0.0.0.0:29092
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9092,EXTERNAL://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+    depends_on:
+      - zookeeper
+    networks:
+      - my_network
+
+  redis-master:
+    container_name: redis-master
+    image: 'redis'
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - my_network
+
+volumes:
+  postgres-data:
+  eventstore-data:
+
+networks:
+  my_network:
+    driver: bridge

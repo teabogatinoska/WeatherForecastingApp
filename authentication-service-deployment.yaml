@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.31.2 (a92241f79)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: authentication-service
+  name: authentication-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: authentication-service
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert
+        kompose.version: 1.31.2 (a92241f79)
+      creationTimestamp: null
+      labels:
+        io.kompose.network/weatherapp-my-network: "true"
+        io.kompose.service: authentication-service
+    spec:
+      containers:
+        - env:
+            - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+              value: http://registration-service:8761/eureka/
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: postgres
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://postgres:5432/userdb
+            - name: SPRING_DATASOURCE_USERNAME
+              value: postgres
+            - name: SPRING_DATA_REDIS_HOST
+              value: redis-master
+            - name: SPRING_DATA_REDIS_PORT
+              value: "6379"
+          image: gcr.io/dissertation-437908/authentication-service:latest
+          name: authentication-service
+          ports:
+            - containerPort: 2222
+              hostPort: 2222
+              protocol: TCP
+          resources: {}
+      restartPolicy: Always
+status: {}
